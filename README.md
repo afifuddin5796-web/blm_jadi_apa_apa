@@ -5,6 +5,7 @@ Aplikasi web untuk petugas irigasi: **peta daerah irigasi**, **debit air tiap be
 ## Fitur
 
 - **Ringkasan**: jumlah bendung, petak, bangunan dan saluran, kondisi air, daftar bendung yang perlu perhatian.
+- **Peta interaktif**: zoom (roda mouse, cubit di HP, tombol + dan -), geser, klik bendung, bangunan, saluran, atau petak untuk melihat detailnya. Label dan simbol kecil baru muncul saat diperbesar agar peta tidak penuh.
 - **Peta** dengan simbol sesuai legenda irigasi (bendung, bang. sadap, bagi, bagi sadap, box tersier, alat ukur, gorong-gorong, terjunan, pelimpah, jembatan, dan lainnya), saluran pembawa dan pembuang, batas daerah irigasi, petak tersier berpola sawah dengan label (nama, luas baku, luas tanam).
 - **Debit**: catat debit (lt/dt) per bendung, grafik 14 hari, status cukup, waspada, kritis.
 - **Tanaman**: laporan luas tanam per daerah irigasi dan musim (padi, jagung, palawija, tebu, lainnya).
@@ -12,7 +13,7 @@ Aplikasi web untuk petugas irigasi: **peta daerah irigasi**, **debit air tiap be
 - **Wilayah DI**: pembagian wilayah per daerah irigasi (mis. per juru pengairan).
 - **Tanya** (untuk juru): jawaban langsung untuk 6 pertanyaan: debit di DI atau bendung yang mengairi petak, daerah yang diairi, letak (desa dan kecamatan), panjang jaringan (seluruhnya atau jalur ke petak atau bangunan), kebutuhan air petak terpilih, dan DI yang dipegang tiap juru.
 - **Pencarian** ke dam, petak tersier, bangunan sadap, bagi sadap, ukur, dan saluran primer, sekunder, tersier, kuarter.
-- **Impor data**: KMZ/KML dari Google Earth (boleh banyak file sekaligus, nama file = nama daerah irigasi), GeoJSON, Excel (termasuk formulir laporan 10 harian 05a dan 06), CSV, JSON aplikasi survei aset.
+- **Impor data**: KMZ/KML dari Google Earth (boleh ratusan file sekaligus; dibaca otomatis dari nama penanda, ikon, dan warna garis; nama folder paling atas = nama daerah irigasi), GeoJSON, Excel (termasuk formulir laporan 10 harian 05a dan 06), CSV, JSON aplikasi survei aset.
 - **Penyimpanan otomatis** di perangkat (IndexedDB) dan **cadangan JSON** yang bisa diunduh dan dipulihkan.
 
 Satuan: luas hektar (ha), debit liter per detik (lt/dt), panjang jaringan km dan m.

@@ -52,6 +52,25 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   assert.strictEqual(w.eval('D.sal.length'), 1, 'KML: 1 saluran');
   assert(d.querySelectorAll('#map g.lt').length === 2, 'Label petak tampil');
 
+  // 1b) KML gaya Google Earth: dibaca otomatis dari nama, ikon, dan warna
+  w.__kml2 = fs.readFileSync(path.join(root, 'data/contoh/gaya-google-earth.kml'), 'utf8');
+  w.eval("(()=>{const all=kparse(__kml2).map(r=>(r.f='x',r));ksmartAll(all);kui(all)})()");
+  const jenis = {};
+  d.querySelectorAll('#kl .krow').forEach(r => { jenis[r.querySelector('b').textContent] = r.querySelector('select[data-r=t]').value; });
+  assert.strictEqual(jenis['Bendung'], 'bendung');
+  assert.strictEqual(jenis['Bangunan ukur'], 'bu');
+  assert.strictEqual(jenis['Box tersier'], 'bt');
+  assert.strictEqual(jenis['Ujung saluran'], '', 'Ujung saluran diabaikan');
+  assert.strictEqual(jenis['Saluran sekunder'], 'ss');
+  assert.strictEqual(jenis['Petak tersier (areal)'], 'petak');
+  d.querySelector('#kgo').click();
+  assert.strictEqual(w.eval('PT.length'), 1, 'Gaya Google Earth: 1 petak');
+  assert.strictEqual(w.eval('JSON.stringify([...new Set(PT.map(p=>p.di))])'), '["Contoh DI"]', 'Nama DI dari folder paling atas');
+  assert(w.eval('D.sal.length') === 3, 'Gaya Google Earth: 3 saluran');
+  assert(d.querySelector('#mvp'), 'Peta punya lapisan zoom');
+  w.eval('zoomTo(300,200,10)');
+  assert.strictEqual(d.querySelector('#map').getAttribute('data-z'), '2', 'Zoom dekat menampilkan semua label');
+
   // 2) Excel (formulir sederhana)
   const buf = fs.readFileSync(path.join(root, 'data/contoh/laporan-tanaman-contoh.xlsx'));
   // ArrayBuffer harus dibuat di dalam 'window' jsdom (beda realm dengan Node)
@@ -68,7 +87,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   Object.defineProperty(inp, 'files', { value: [{ name: 'c.json', text: async () => cad }] });
   inp.dispatchEvent(new w.Event('change'));
   await sleep(100);
-  assert.strictEqual(w.eval('PT.length'), 2, 'Pemulihan cadangan: 2 petak');
+  assert.strictEqual(w.eval('PT.length'), 1, 'Pemulihan cadangan: 1 petak');
 
   assert.deepStrictEqual(galat, [], 'Galat saat uji: ' + galat.join(' | '));
   console.log('OK: semua uji lolos');

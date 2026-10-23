@@ -6,6 +6,13 @@
 - Luas petak diambil dari data tambahan `Luas` bila ada, jika tidak dihitung dari poligon. Panjang saluran dihitung dari garis.
 - Impor ini **mengganti** peta dan data jaringan yang ada. Satukan beberapa file di Google Earth lebih dulu.
 
+### Pembacaan otomatis gaya Google Earth (bawaan)
+Dicentang bawaan di Setelan. Aturan yang dipakai (bisa diperbaiki per kelompok sebelum mengimpor):
+- **Titik** dari nama: `Bd` atau Bendung = bendung; `BU` = bangunan ukur; `bok` atau box = box tersier; `BP` atau bagi = bangunan bagi; `BT` atau sadap = bangunan sadap; `pelimpah`; `ujung` = diabaikan (hanya penanda ujung saluran); `suplisi` = suplesi. Bila nama tidak jelas dipakai ikon (pushpin kuning = bendung, telepon = ukur, kotak = box, donat = bagi).
+- **Garis** dari nama (`Sec` sekunder, primer, tersier, kuarter, pembuang), bila tidak ada dari **warna garis** (tebakan awal: kuning sekunder, merah primer, hijau tersier, tanpa warna kuarter). Periksa pilihannya sebelum mengimpor, cukup sekali untuk semua file.
+- **Poligon** pada folder `areal`/`petak` = petak tersier.
+- **Nama daerah irigasi** = nama folder paling atas di tiap file, supaya sama dengan nama DI di laporan Excel.
+
 ## 2. GeoJSON — tab Data
 Poligon menjadi daerah irigasi, garis menjadi saluran, titik menjadi bendung. Nama dari properti `nama` atau `name`.
 
