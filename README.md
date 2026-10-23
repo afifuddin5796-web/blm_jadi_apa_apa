@@ -4,6 +4,8 @@ Aplikasi web untuk petugas irigasi: **peta daerah irigasi**, **debit air tiap be
 
 ## Fitur
 
+Aplikasi **mulai kosong**. Data contoh bisa dimuat dari tab Data (hanya untuk mencoba) dan dihapus lagi dengan satu tombol.
+
 - **Ringkasan**: jumlah bendung, petak, bangunan dan saluran, kondisi air, daftar bendung yang perlu perhatian.
 - **Peta interaktif**: zoom (roda mouse, cubit di HP, tombol + dan -), geser, klik bendung, bangunan, saluran, atau petak untuk melihat detailnya. Label dan simbol kecil baru muncul saat diperbesar agar peta tidak penuh.
 - **Peta** dengan simbol sesuai legenda irigasi (bendung, bang. sadap, bagi, bagi sadap, box tersier, alat ukur, gorong-gorong, terjunan, pelimpah, jembatan, dan lainnya), saluran pembawa dan pembuang, batas daerah irigasi, petak tersier berpola sawah dengan label (nama, luas baku, luas tanam).

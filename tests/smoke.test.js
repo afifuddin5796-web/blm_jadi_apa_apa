@@ -29,7 +29,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   assert.deepStrictEqual(galat, [], 'Tidak boleh ada galat saat memuat: ' + galat.join(' | '));
   assert(w.XLSX && w.JSZip, 'Library lokal (vendor/) harus termuat');
-  assert.strictEqual(w.eval('PT.length'), 10, 'Data contoh: 10 petak');
+  assert.strictEqual(w.eval('PT.length'), 0, 'Aplikasi mulai kosong (tanpa data contoh)');
+  assert(/Selamat datang/.test(d.querySelector('#ring').textContent), 'Ringkasan menampilkan sambutan saat kosong');
+  w.eval('loadSample()');
+  assert.strictEqual(w.eval('PT.length'), 10, 'Data contoh (opsional): 10 petak');
 
   // 0) Tab Tanya: jawaban untuk juru (data contoh)
   w.eval("show('tny')");
@@ -41,6 +44,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   tanya(5, di); d.querySelector('[data-act="all5"]').click();
   assert(/petak terpilih/.test(d.querySelector('#s5').textContent), 'Tanya 5: kebutuhan petak terpilih');
   tanya(6, ''); assert(d.querySelectorAll('#a6 tbody tr').length > 0, 'Tanya 6: juru dan DI');
+
+  // hapus hanya data contoh
+  d.querySelector('#rms').click();
+  assert.strictEqual(w.eval('PT.length'), 0, 'Hapus data contoh');
+  w.eval('loadSample()');
 
   // 1) KML
   const kml = fs.readFileSync(path.join(root, 'data/contoh/contoh.kml'), 'utf8');
