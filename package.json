@@ -5,10 +5,12 @@
   "description": "Aplikasi pemantauan irigasi (peta, debit, laporan tanaman, LPR dan FPR)",
   "license": "MIT",
   "scripts": {
-    "test": "node tests/smoke.test.js",
-    "serve": "npx --yes serve ."
+    "test": "node tests/smoke.test.js && node tests/gabung.test.js",
+    "serve": "npx --yes serve .",
+    "gabung": "node tools/gabung-kmz.js"
   },
   "devDependencies": {
-    "jsdom": "^24.0.0"
+    "jsdom": "^24.0.0",
+    "jszip": "^3.10.2"
   }
 }

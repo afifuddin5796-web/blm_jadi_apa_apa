@@ -1,6 +1,6 @@
 // Service worker: membuat aplikasi bisa dibuka tanpa sinyal setelah kunjungan pertama.
 // Naikkan nomor VERSI setiap kali index.html diubah agar pengguna mendapat pembaruan.
-const VERSI = 'irigasi-v7';
+const VERSI = 'irigasi-v8';
 const ASET = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'vendor/jszip.min.js', 'vendor/xlsx.full.min.js'];
 
 self.addEventListener('install', e => {

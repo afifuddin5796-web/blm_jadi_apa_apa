@@ -114,7 +114,8 @@ header,.gs,main{padding-left:16px;padding-right:16px}h1{font-size:26px}}
 #map[data-z="1"] .lt,#map[data-z="1"] .bl{display:none}
 #map{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}#map:active{cursor:grabbing}
 .mz{position:absolute;top:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:2}
-.mz button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 20px 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer;backdrop-filter:blur(6px)}.mz button:hover{border-color:var(--water)}
+.mz button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 20px 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer;backdrop-filter:blur(6px)}.mz button.on{background:var(--water);color:#04121f;border-color:var(--water)}#map.meas{cursor:crosshair}
+#mhud{position:absolute;left:24px;bottom:24px;max-width:min(80%,380px);background:var(--panel);border:1px solid var(--water);border-radius:10px;padding:10px 12px;z-index:2;backdrop-filter:blur(8px);font-size:14px;line-height:1.5}#mhud button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:4px 10px;margin:6px 6px 0 0;cursor:pointer;font:inherit}
 .krow{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,.8fr);gap:10px;align-items:end;padding:12px 0;border-bottom:1px solid var(--line)}
 @media(max-width:820px){.krow{grid-template-columns:1fr}}
 </style></head><body>
@@ -134,7 +135,7 @@ header,.gs,main{padding-left:16px;padding-right:16px}h1{font-size:26px}}
 <section id="t-ring"><div id="ring"></div></section>
 <section id="t-tny" hidden><div id="tny"></div></section>
 <section id="t-peta" class="grid" hidden>
-<div class="card" style="position:relative"><div class="mz"><button data-zm="+" aria-label="Perbesar">+</button><button data-zm="-" aria-label="Perkecil">−</button><button data-zm="0" aria-label="Tampilan penuh" style="font-size:15px">⌂</button></div><svg id="map" viewBox="0 0 600 420" role="img" aria-label="Peta skematis daerah irigasi dan bendung"></svg>
+<div class="card" style="position:relative"><div class="mz"><button data-zm="+" aria-label="Perbesar">+</button><button data-zm="-" aria-label="Perkecil">−</button><button data-zm="0" aria-label="Tampilan penuh" style="font-size:15px">⌂</button><button data-zm="m" aria-label="Ukur jarak" title="Ukur jarak"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="8.5" width="21" height="7" rx="1.5" transform="rotate(-30 12 12)"/><path d="M6.5 14.2l1.2-.7M9.5 12.4l1-.6M12.5 10.6l1.2-.7M15.5 8.8l1-.6"/></svg></button></div><div id="mhud" hidden></div><svg id="map" viewBox="0 0 600 420" role="img" aria-label="Peta skematis daerah irigasi dan bendung"></svg>
 <div class="leg"><span><i class="dot" style="background:var(--water)"></i>Cukup</span><span><i class="dot" style="background:var(--warn)"></i>Waspada</span><span><i class="dot" style="background:var(--crit)"></i>Kritis</span><span><i class="dot" style="background:var(--mut)"></i>Belum ada data</span></div><div class="leg" id="lyr"><label style="display:inline-flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" data-l="b" checked>Bangunan</label><label style="display:inline-flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" data-l="s" checked>Saluran</label><label style="display:inline-flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" data-l="p" checked>Petak</label><label style="display:inline-flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" data-l="t" checked>Label petak</label><label style="display:inline-flex;gap:6px;align-items:center;color:var(--ink)">Peta dasar<select id="bgsel" style="padding:4px 8px"><option value="">Tanpa</option><option value="sat">Satelit (Esri)</option><option value="osm">Jalan (OpenStreetMap)</option></select></label><span id="attr" class="note"></span></div>
 <div class="leg"><span><svg class="sy" viewBox="-14 -8 28 16"><rect x="-13" y="-6" width="26" height="12" rx="3" fill="var(--water)"/><path d="M-9,-2L-6,2L-3,-2L0,2L3,-2L6,2L9,-2" fill="none" stroke="var(--surf)" stroke-width="1.5"/></svg>Bendung</span><span><svg class="sy" viewBox="-9 -9 18 18"><g fill="var(--warn)" stroke="var(--surf)" stroke-width="1.2"><rect x="-6" y="-6" width="12" height="12"/><path d="M0,-6V6" fill="none"/></g></svg>Bangunan bagi</span><span><svg class="sy" viewBox="-9 -9 18 18"><g fill="var(--warn)" stroke="var(--surf)" stroke-width="1.2"><path d="M-6,-6h7v12h-7z"/><path d="M3,-4L8,0L3,4z"/></g></svg>Bagi sadap</span><span><svg class="sy" viewBox="-9 -9 18 18"><g fill="var(--paddy)" stroke="var(--surf)" stroke-width="1.2"><path d="M-5,-5L5,0L-5,5Z"/></g></svg>Bangunan sadap</span><span><svg class="sy" viewBox="-9 -9 18 18"><g fill="#a78bfa" stroke="var(--surf)" stroke-width="1.2"><circle r="6"/><path d="M-3.5,0H3.5M-3.5,-2.5H3.5M-3.5,2.5H3.5" fill="none"/></g></svg>Bangunan ukur</span></div>
 <div class="leg"><span><svg class="sy" viewBox="0 0 28 8"><path d="M0 4H28" stroke="var(--water)" stroke-width="3.6"/></svg>Saluran primer</span><span><svg class="sy" viewBox="0 0 28 8"><path d="M0 4H28" stroke="var(--water)" stroke-width="2.6"/></svg>Sekunder</span><span><svg class="sy" viewBox="0 0 28 8"><path d="M0 4H28" stroke="var(--paddy)" stroke-width="1.7"/></svg>Tersier</span><span><svg class="sy" viewBox="0 0 28 8"><path d="M0 4H28" stroke="var(--paddy)" stroke-width="1"/></svg>Kuarter</span><span><svg class="sy" viewBox="0 0 28 8"><path d="M0 4H28" stroke="var(--mut)" stroke-width="1.4" stroke-dasharray="4 3"/></svg>Pembuang</span></div></div>
@@ -174,7 +175,7 @@ header,.gs,main{padding-left:16px;padding-right:16px}h1{font-size:26px}}
 const $=s=>document.querySelector(s);
 const LS={sp:[3,'var(--ink)'],ss:[2,'var(--ink)'],st:[1.3,'var(--ink)'],sk:[.8,'var(--ink)'],sb:[1.4,'var(--ink)','6 4']};
 const AR='M-2.2,-2.2L0,0L2.2,-2.2';
-let GEO={desa:[],kec:[]},LOC={},KECM={},KDEF={},MZ={k:1,x:0,y:0};
+let GEO={desa:[],kec:[]},LOC={},KECM={},KDEF={},MZ={k:1,x:0,y:0},MEAS={on:false,p:[]};
 const SYM2={bs:'<circle r="4.5"/><path d="M3.2,3.2L8.5,8.5M8.5,8.5H5M8.5,8.5V5"/>',bg:'<circle r="5"/><circle r="1.6" fill="var(--ink)"/><path d="M0,5V10M-2.2,7.8L0,10L2.2,7.8"/>',bbs:'<circle r="6.5"/><circle r="4"/><circle r="1.5" fill="var(--ink)"/><path d="M0,6.5V11M-2.2,9L0,11L2.2,9"/>',bt:'<rect x="-3.5" y="-3.5" width="7" height="7"/><path d="M0,-3.5V-9M-2,-7L0,-9L2,-7M0,3.5V9M-2,7L0,9L2,7M3.5,0H9M7,-2L9,0L7,2"/>',bu:'<path d="M-8,0H8M0,-5V5"/><circle r="1.8" fill="var(--ink)"/>',gg:'<path d="M-8,0H8"/><rect x="-3.5" y="-3" width="7" height="6"/><path d="M-1,-3V3M1,-3V3"/>',jb:'<path d="M-8,0H8"/><rect x="-4" y="-2.5" width="8" height="5"/><path d="M-4,2.5L4,-2.5"/>',tj:'<path d="M-8,0H8M-3,-5H3M0,-5V5M-3,5H3"/>',pl:'<path d="M-8,0H8M-3,-3V-6H3V-3M0,-3V-9M-2,-7L0,-9L2,-7"/>',tc:'<path d="M-8,0H8"/><rect x="-3" y="-3" width="6" height="3"/>',mh:'<path d="M-8,0H8"/><rect x="-3" y="-1.5" width="6" height="3"/>',bl:'<circle r="3"/>'};
 const SYM={bs:'<path d="M-5,-5L5,0L-5,5Z"/>',bbs:'<path d="M-6,-6h7v12h-7z"/><path d="M3,-4L8,0L3,4z"/>',bg:'<rect x="-6" y="-6" width="12" height="12"/><path d="M0,-6V6" fill="none"/>',bu:'<circle r="6"/><path d="M-3.5,0H3.5M-3.5,-2.5H3.5M-3.5,2.5H3.5" fill="none"/>',bt:'<rect x="-4" y="-4" width="8" height="8"/>',bl:'<circle r="3.5"/>'};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -198,7 +199,7 @@ function sample(){
  {nama:'DI Contoh Timur',luas:'760 ha',pts:[[430,80],[570,110],[560,300],[400,350],[310,270],[444,236]]}],
  sal:[[[150,70],[145,150],[140,250]],[[330,110],[320,200],[370,300]],[[480,130],[490,220],[470,300]],[[150,70],[210,120],[330,110]],[[330,110],[400,120],[480,130]]]};
 }
-function init(d,c){D=d;C=c;sel=null;MZ.k=1;MZ.x=0;MZ.y=0;D.bn.forEach(b=>{(S[b.id]||[]).forEach(e=>{if(!b.debit.some(x=>x.t===e.t))b.debit.push(e)});b.debit.sort((a,c)=>a.t<c.t?-1:1)});all()}
+function init(d,c){D=d;C=c;sel=null;MZ.k=1;MZ.x=0;MZ.y=0;MEAS.p=[];MEAS.on=false;D.bn.forEach(b=>{(S[b.id]||[]).forEach(e=>{if(!b.debit.some(x=>x.t===e.t))b.debit.push(e)});b.debit.sort((a,c)=>a.t<c.t?-1:1)});all()}
 const last=b=>b.debit.length?b.debit[b.debit.length-1]:null;
 function stat(b){const l=last(b);if(!l||!b.keb)return['Belum ada data','var(--mut)'];const r=l.v/b.keb;return r>=1?['Cukup','var(--water)']:r>=.7?['Waspada','var(--warn)']:['Kritis','var(--crit)']}
 const fmt=n=>Number(n).toLocaleString('id-ID');
@@ -502,24 +503,24 @@ function xbDetect(wb){
  $('#xa').hidden=true;$('#xw').hidden=true;$('#xhl').hidden=true;$('#xb').hidden=false;
  $('#xbinfo').textContent=`Terdeteksi laporan 10 harian: ${XB.pt.length} petak tersier, ${jr.size} juru pengairan, ${XB.pl.length} tempat pengukuran debit, ${XB.bd.length} bendung${XB.per?', periode '+XB.per.txt:''}.`;
  say('Format laporan 10 harian dikenali. Klik Impor laporan 10 harian.');return true}
-function xbImport(){const P=XB;if(!P)return;
+function xbImport(){const P=XB;if(!P)return;CDI=new Map(diNames().map(n=>[dkey(n),n]));
  if(D.sample){PT.length=0;WP.length=0;JR.length=0;Object.keys(WB).forEach(k=>delete WB[k]);D={bn:[],di:[],sal:[],salk:[],saln:[]};C=[]}
  const jur=[...new Set(P.pt.concat(P.pl).map(p=>p.juru).filter(Boolean))],jw=j=>jur.indexOf(j)+1;
  const dd=i=>P.per&&P.per.mo?new Date(Date.UTC(P.per.y,P.per.mo-1,P.per.d1+i)).toISOString().slice(0,10):iso(new Date());
  INFO.wil=jur.map(tc).join('\n');saveInfo();applyInfo();
  let nu=0,na=0,nq=0;
  P.pt.forEach(r=>{const k=nrmP(r.n),ex=PT.findIndex(p=>nrmP(p.n)===k),o={lb:r.lb,sem:r.sem,olah:r.olah,tumb:r.tumb,tm:r.tm,tt:r.tt,pal:r.pal};
-  if(ex>=0){Object.assign(PT[ex],o,{di:tc(r.di),ds:r.ds});WP[ex]=jw(r.juru);nu++}else{PT.push({n:r.n,di:tc(r.di),sal:'-',q:0,ds:r.ds,...o});WP.push(jw(r.juru));na++}});
+  if(ex>=0){Object.assign(PT[ex],o,{di:cdi(r.di),ds:r.ds});WP[ex]=jw(r.juru);nu++}else{PT.push({n:r.n,di:cdi(r.di),sal:'-',q:0,ds:r.ds,...o});WP.push(jw(r.juru));na++}});
  P.pl.forEach(pl=>{if(pl.avg==null)return;const k=nrmP(pl.n),i=PT.findIndex(p=>{const a=nrmP(p.n);return a===k||(a.length>=6&&k.startsWith(a)&&!/\d/.test(k[a.length]||''))});if(i>=0){PT[i].q=+pl.avg.toFixed(2);nq++}});
  for(let i=JR.length-1;i>=0;i--)if(JR[i].src==='xl')JR.splice(i,1);
- P.pl.forEach(pl=>JR.push({k:'bu',n:'Ukur '+pl.n,nom:`Tipe ${pl.tipe||'-'}, lebar ${pl.lebar===''||pl.lebar==null?'-':pl.lebar} m`,di:tc(pl.di),w:jw(pl.juru),ind:'',pj:null,kd:pl.kond||'-',q:pl.keb==null?null:+pl.keb.toFixed(1),ls:pl.baku||null,th:'',av:pl.avg==null?null:+pl.avg.toFixed(1),src:'xl'}));
+ P.pl.forEach(pl=>JR.push({k:'bu',n:'Ukur '+pl.n,nom:`Tipe ${pl.tipe||'-'}, lebar ${pl.lebar===''||pl.lebar==null?'-':pl.lebar} m`,di:cdi(pl.di),w:jw(pl.juru),ind:'',pj:null,kd:pl.kond||'-',q:pl.keb==null?null:+pl.keb.toFixed(1),ls:pl.baku||null,th:'',av:pl.avg==null?null:+pl.avg.toFixed(1),src:'xl'}));
  let nb=0;
  P.bd.forEach(b=>{const k=nrmB(b.n),p0=P.pl.find(p=>p.di===b.di&&p.juru===b.juru&&p.keb!=null);let bb=k?D.bn.find(x=>nrmB(x.nama)===k):null;
-  if(!bb){bb={id:'X'+Date.now().toString(36)+nb,nama:b.n,di:tc(b.di),x:0,y:0,keb:0,debit:[],np:1};D.bn.push(bb)}
+  if(!bb){bb={id:'X'+Date.now().toString(36)+nb,nama:b.n,di:cdi(b.di),x:0,y:0,keb:0,debit:[],np:1};D.bn.push(bb)}
   WB[bb.id]=jw(b.juru);
   if(p0){bb.keb=+(p0.keb||0).toFixed(1);p0.days.forEach((v,i)=>{if(typeof v==='number'){const t=dd(i);bb.debit=bb.debit.filter(e=>e.t!==t);bb.debit.push({t,v:+v.toFixed(2)})}});bb.debit.sort((a,c)=>a.t<c.t?-1:1)}
   nb++});
- const g={};P.pt.forEach(r=>{const d=tc(r.di),o=g[d]||(g[d]={di:d,padi:0,pal:0,teb:0});o.padi+=r.sem+r.olah+r.tumb;o.pal+=r.pal;o.teb+=r.tm+r.tt});
+ const g={};P.pt.forEach(r=>{const d=cdi(r.di),o=g[d]||(g[d]={di:d,padi:0,pal:0,teb:0});o.padi+=r.sem+r.olah+r.tumb;o.pal+=r.pal;o.teb+=r.tm+r.tt});
  const mu='Periode '+(P.per?P.per.txt:'laporan');C=C.filter(r=>!/^Periode /.test(r.m)).concat(Object.values(g).map(o=>({di:o.di,m:mu,padi:o.padi,jagung:0,pal:o.pal,teb:o.teb,lain:0})));
  init(D,C);lrender();$('#gr').innerHTML='';
  say(`Impor selesai: ${nu} petak diperbarui, ${na} petak baru, ${nq} petak mendapat debit terukur, ${nb} bendung, ${P.pl.length} tempat pengukuran. Wilayah mengikuti ${jur.length} juru pengairan.`)}
@@ -694,7 +695,7 @@ function ksmartAll(all){KDEF={};const L=(l,t)=>{KDEF[l]=t;return l};
   else l=/batas|\bdi\b/.test(s)&&!/areal|petak/.test((r.p0||'').toLowerCase())?L('Batas DI','di'):L('Petak tersier (areal)','petak');
   r.p=l})}
 function clampZ(){MZ.k=Math.min(80,Math.max(1,MZ.k));MZ.x=Math.min(0,Math.max(600-600*MZ.k,MZ.x));MZ.y=Math.min(0,Math.max(420-420*MZ.k,MZ.y))}
-function applyZoom(){const g=$('#mvp'),m=$('#map');if(!g)return;clampZ();g.setAttribute('transform',`translate(${MZ.x} ${MZ.y}) scale(${MZ.k})`);m.style.setProperty('--zs',String(1/MZ.k));m.setAttribute('data-z',MZ.k<2.5?'0':MZ.k<6?'1':'2');clearTimeout(window.__tl);window.__tl=setTimeout(tilesRefresh,120)}
+function applyZoom(){const g=$('#mvp'),m=$('#map');if(!g)return;clampZ();g.setAttribute('transform',`translate(${MZ.x} ${MZ.y}) scale(${MZ.k})`);m.style.setProperty('--zs',String(1/MZ.k));m.setAttribute('data-z',MZ.k<2.5?'0':MZ.k<6?'1':'2');clearTimeout(window.__tl);window.__tl=setTimeout(tilesRefresh,120);if(typeof measDraw==='function')measDraw()}
 function zoomTo(x,y,k){MZ.k=k||8;MZ.x=300-x*MZ.k;MZ.y=210-y*MZ.k;applyZoom()}
 (()=>{const m=$('#map'),P=new Map();let drag=null,moved=0,pd=0;
  const U=(cx,cy)=>{try{const p=m.createSVGPoint();p.x=cx;p.y=cy;const q=p.matrixTransform(m.getScreenCTM().inverse());return[q.x,q.y]}catch(e){return[300,210]}};
@@ -707,9 +708,9 @@ function zoomTo(x,y,k){MZ.k=k||8;MZ.x=300-x*MZ.k;MZ.y=210-y*MZ.k;applyZoom()}
   else if(P.size===2){const a=[...P.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);if(pd){const[c,u]=U((a[0][0]+a[1][0])/2,(a[0][1]+a[1][1])/2);zoom(d/pd,c,u);moved=9}pd=d}});
  const up=e=>{P.delete(e.pointerId);drag=null;pd=0;if(P.size===1){const a=[...P.values()][0];drag={x:a[0],y:a[1],mx:MZ.x,my:MZ.y}}};
  addEventListener('pointerup',up);addEventListener('pointercancel',up);
- m.addEventListener('click',e=>{if(moved>3){e.stopPropagation();e.preventDefault();moved=0}},true);
+ m.addEventListener('click',e=>{if(moved>3){e.stopPropagation();e.preventDefault();moved=0;return}if(MEAS.on){e.stopPropagation();e.preventDefault();measAdd(e.clientX,e.clientY)}},true);
  m.addEventListener('dblclick',e=>{const[a,b]=U(e.clientX,e.clientY);zoom(2,a,b)});
- document.querySelector('.mz').addEventListener('click',e=>{const z=e.target.closest('[data-zm]');if(!z)return;const t=z.dataset.zm;if(t==='0'){MZ.k=1;MZ.x=0;MZ.y=0;applyZoom()}else zoom(t==='+'?1.6:1/1.6,300,210)});
+ document.querySelector('.mz').addEventListener('click',e=>{const z=e.target.closest('[data-zm]');if(!z)return;const t=z.dataset.zm;if(t==='0'){MZ.k=1;MZ.x=0;MZ.y=0;applyZoom()}else if(t==='m')measToggle();else zoom(t==='+'?1.6:1/1.6,300,210)});
  m.addEventListener('click',e=>{const s=e.target.closest('[data-s]'),p=e.target.closest('[data-pi]');
   if(s){const i=+s.dataset.s,u=(D.salu||[])[i],j=(u&&JR.find(x=>x.id===u))||JR.find(x=>x.k===(D.salk||[])[i]&&x.n===(D.saln||[])[i]);if(j)sinfo(j)}
   else if(p){const d=D.di[+p.dataset.pi];if(d&&d.nolabel){const i=PT.findIndex(x=>x.n===d.nama);if(i>=0)pinfo(i)}}});
@@ -823,5 +824,23 @@ ${jtSel(p.di)}
  LASTD=()=>pinfo(i);showD()}
 dlg.addEventListener('click',e=>{const a=e.target.closest('[data-lpr]');if(a){dlg.close();show('lpr');det(+a.dataset.lpr)}});
 dlg.addEventListener('change',e=>{const s=e.target.closest('[data-jt]');if(!s)return;const di=s.dataset.jt;if(s.value)JT[di]=s.value;else delete JT[di];if(LASTD)LASTD()});
+let CDI=null;const dkey=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,''),cdi=s=>{const k=dkey(s);if(CDI&&CDI.has(k))return CDI.get(k);const v=tc(s);if(CDI)CDI.set(k,v);return v};
+const hav=(a,b)=>{const R=6371008.8,r=Math.PI/180,dl=(b[1]-a[1])*r,dn=(b[0]-a[0])*r,x=Math.sin(dl/2)**2+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x))};
+const measLen=()=>MEAS.p.reduce((s,q,i)=>i?s+hav(MEAS.p[i-1],q):0,0);
+function measHud(note){const h=$('#mhud');if(!MEAS.on&&!MEAS.p.length){h.hidden=true;return}h.hidden=false;
+ if(!D.proj){h.innerHTML='Ukur jarak butuh peta berkoordinat. Impor KMZ atau JSON survei lebih dulu.';return}
+ const n=MEAS.p.length,seg=n>1?hav(MEAS.p[n-2],MEAS.p[n-1]):0;
+ h.innerHTML=`<b>Ukur jarak</b>${MEAS.on?' (klik titik-titik pada peta)':''}<br>${n?`Total: <b>${fm(Math.round(measLen()))}</b> dari ${n} titik${n>1?`, segmen terakhir ${fm(Math.round(seg))}`:''}`:'Belum ada titik.'}${note?`<br><small>${esc(note)}</small>`:''}<br><button data-ma="undo">Urungkan</button><button data-ma="clear">Hapus</button><button data-ma="kml">Simpan KML</button><button data-ma="done">${MEAS.on?'Selesai':'Ukur lagi'}</button>`}
+function measToggle(){MEAS.on=!MEAS.on;$('#map').classList.toggle('meas',MEAS.on);const b=document.querySelector('.mz [data-zm="m"]');if(b)b.classList.toggle('on',MEAS.on);measHud()}
+function measAdd(cx,cy){const m=$('#map'),pr=D.proj;if(!pr)return;let ux=300,uy=210;try{const p=m.createSVGPoint();p.x=cx;p.y=cy;const q=p.matrixTransform(m.getScreenCTM().inverse());ux=q.x;uy=q.y}catch(e){}
+ const X=(ux-MZ.x)/MZ.k,Y=(uy-MZ.y)/MZ.k;MEAS.p.push([pr.x0+(X-20)/pr.k,pr.y1-(Y-20)/pr.k]);measHud();measDraw()}
+function measDraw(){const mv=$('#mvp');if(!mv)return;let g=$('#mg');if(!g){g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('id','mg');mv.appendChild(g)}
+ const pr=D.proj;if(!pr||!MEAS.p.length){g.innerHTML='';return}const q=MEAS.p.map(c=>[20+(c[0]-pr.x0)*pr.k,20+(pr.y1-c[1])*pr.k]);
+ g.innerHTML=`<polyline points="${q.map(a=>a.join(',')).join(' ')}" fill="none" stroke="#ff3b81" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>`+q.map((a,i)=>`<g transform="translate(${a[0]} ${a[1]})"><circle class="sz" r="4" fill="#fff" stroke="#ff3b81" stroke-width="2"/>${i&&i===q.length-1?`<g class="sz"><text y="-9" text-anchor="middle" font-size="10" font-weight="600" fill="var(--ink)" stroke="var(--bg)" stroke-width="3" paint-order="stroke">${fm(Math.round(measLen()))}</text></g>`:''}</g>`).join('')}
+$('#mhud').addEventListener('click',async e=>{const a=e.target.closest('[data-ma]');if(!a)return;const t=a.dataset.ma;
+ if(t==='undo'){MEAS.p.pop();measHud();measDraw()}else if(t==='clear'){MEAS.p=[];if(MEAS.on)measToggle();else measHud();measDraw()}
+ else if(t==='done'){measToggle()}
+ else if(t==='kml'){if(MEAS.p.length<2)return measHud('Tambahkan minimal dua titik.');const L=fm(Math.round(measLen())),k=`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><Placemark><name>Ukur jarak ${kx(L)}</name><description>Panjang: ${kx(L)}</description><Style><LineStyle><color>ff813bff</color><width>3</width></LineStyle></Style><LineString><tessellate>1</tessellate><coordinates>${MEAS.p.map(c=>c[0].toFixed(7)+','+c[1].toFixed(7)+',0').join(' ')}</coordinates></LineString></Placemark></Document></kml>`;
+  const ok=await dlFile(`ukur-jarak-${iso(new Date())}.kml`,k,'application/vnd.google-earth.kml+xml');measHud(ok?'KML disimpan, buka di Google Earth.':'KML gagal disimpan.')}});
 </script>
 <script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script></body></html>

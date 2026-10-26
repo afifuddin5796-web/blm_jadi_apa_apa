@@ -90,6 +90,12 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   const jt = d.querySelector('#dlg [data-jt]'); jt.value = 'teknis'; jt.dispatchEvent(new w.Event('change', { bubbles: true }));
   assert(/Teknis/.test(d.querySelector('#dlg').textContent) && !/Teknis\s*\(perkiraan\)/.test(d.querySelector('#dlg').textContent), 'Jenis jaringan manual');
 
+  // Alat ukur jarak: 0,01 derajat bujur di lintang -7,7 sekitar 1,10 km
+  w.eval('MEAS.p=[[112.7,-7.7],[112.71,-7.7]]');
+  const jr = Math.round(w.eval('measLen()'));
+  assert(jr > 1090 && jr < 1120, 'Ukur jarak ' + jr);
+  w.eval('MEAS.p=[]');
+
   // Ekspor KML (Google Earth) dan peta dasar
   const kmlOut = w.eval('buildKml()');
   assert(new w.DOMParser().parseFromString(kmlOut.kml, 'text/xml').getElementsByTagName('Placemark').length >= 5, 'Ekspor KML berisi penanda');

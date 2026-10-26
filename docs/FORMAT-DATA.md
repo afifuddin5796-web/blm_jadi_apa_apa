@@ -70,3 +70,6 @@ Ini perkiraan, bukan penetapan resmi. Klasifikasi resmi bisa ditetapkan manual d
 
 ## 12. Bangunan di sepanjang jalur
 Dari koordinat: bangunan dan bendung dalam jarak 25 m dari garis saluran (atau di dalam atau sampai 25 m dari batas petak) dianggap berada di jalur atau petak itu. Pada data survei, bangunan hulu dan hilir diambil dari keterkaitan hulu-hilir.
+
+## 13. Penyamaan nama DI antara KMZ dan Excel
+Nama DI di KMZ diambil dari folder paling atas, sedangkan di Excel dari baris `DI. ...`. Saat laporan Excel diimpor, nama dengan huruf dan tanda baca berbeda (misalnya `BUNDER 1` dan `Bunder 1`) disamakan ke penulisan yang sudah ada dari KMZ. Nama yang benar-benar berbeda (ejaan lain) harus disamakan manual di KMZ atau Excel. Skrip `npm run gabung` menampilkan daftar nama yang tidak cocok.

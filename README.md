@@ -61,6 +61,23 @@ Catatan: GitHub Pages dari repositori *private* umumnya hanya tersedia di paket 
 
 Hubungkan repositori, **tanpa perintah build** dan **direktori output `/`** (situs statis). Cocok bila repositori ingin dibuat private.
 
+## Memasukkan banyak file KMZ (misalnya 115 DI)
+
+**Cara A, langsung di aplikasi** (tanpa instalasi):
+1. Buka **Setelan**, pada *Peta dari KMZ atau KML* pilih **semua file KMZ sekaligus** (centang *Baca otomatis*).
+2. Periksa daftar kelompok yang muncul (bendung, bangunan, saluran per warna, petak) dan ubah jenisnya bila perlu. Cukup sekali untuk semua file.
+3. Klik **Impor ke aplikasi**, lalu **Unduh cadangan (JSON)** di tab Data.
+
+**Cara B, skrip komputer** (hasil identik, plus pemeriksaan nama DI terhadap laporan Excel):
+```bash
+npm install
+npm run gabung -- data/privat/kmz -o data/privat/wilayah.json --excel data/privat/laporan.xlsx --laporan data/privat/laporan.txt
+```
+`data/privat/kmz` boleh berupa folder atau berkas `.zip` berisi semua KMZ. Buka `wilayah.json` di aplikasi lewat **Data, Pulihkan dari cadangan**. Berkas `laporan.txt` memuat daftar kelompok yang terbaca, jumlahnya, dan DI yang namanya tidak cocok antara KMZ dan Excel. Node.js 18 atau lebih baru diperlukan.
+
+## Ukur jarak
+Tombol penggaris di pojok peta: klik titik-titik di peta untuk mengukur jarak (km dan m, per segmen dan total), urungkan, dan simpan garisnya sebagai KML untuk dibuka di Google Earth. Butuh peta berkoordinat dari KMZ atau JSON survei.
+
 ## Google Earth dan Google Maps
 
 - **Peta dasar** (tab Peta, pilihan *Peta dasar*): citra satelit (Esri) atau peta jalan (OpenStreetMap) diletakkan tepat di bawah peta aplikasi dan ikut ter-zoom. Butuh internet dan data berkoordinat dari KMZ atau JSON survei. Tersedia di versi yang dipasang di web sendiri (GitHub Pages dan sejenisnya). Tampilan di dalam claude.ai memblokir gambar dari luar, jadi tidak muncul di sana.
