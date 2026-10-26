@@ -1,846 +1,229 @@
 <!doctype html>
-<html lang="id"><head><meta charset="utf-8">
+<html lang="id">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Irigasi</title>
-<meta name="description" content="Aplikasi pemantauan irigasi: peta, debit air, laporan tanaman, LPR dan FPR.">
-<meta name="theme-color" content="#060b17">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<script src="vendor/jszip.min.js"></script>
-<script src="vendor/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0a1120">
+<title>Irigasi Purwosari</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#eef3ef;--surf:#fff;--ink:#12302f;--mut:#5b706d;--line:#d3dfd9;--water:#1d6f78;--paddy:#7ea32b;--warn:#b7791f;--crit:#b3412e;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1f20;--surf:#142a2b;--ink:#e4efec;--mut:#8fa8a4;--line:#25403f;--water:#4fb3bf;--paddy:#a5cf4a;--warn:#e0a53f;--crit:#ef7a66;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0d1f20;--surf:#142a2b;--ink:#e4efec;--mut:#8fa8a4;--line:#25403f;--water:#4fb3bf;--paddy:#a5cf4a;--warn:#e0a53f;--crit:#ef7a66;color-scheme:dark}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'Source Sans 3',system-ui,sans-serif}
-header{padding:20px 18px 6px;max-width:1100px;margin:0 auto}
-h1{font:700 28px/1.1 'Bricolage Grotesque',system-ui,sans-serif;margin:0 0 4px;letter-spacing:-.01em}
-h2{font:600 18px 'Bricolage Grotesque',system-ui,sans-serif;margin:0 0 8px}
-header p{margin:0;color:var(--mut);max-width:60ch}
-nav{display:flex;gap:6px;padding:12px 18px;max-width:1100px;margin:0 auto;overflow-x:auto}
-nav button{border:1px solid var(--line);background:var(--surf);color:var(--ink);padding:8px 14px;border-radius:999px;font:600 15px inherit;font-family:inherit;cursor:pointer;white-space:nowrap}
-nav button[aria-selected="true"]{background:var(--water);border-color:var(--water);color:#fff}
-button:focus-visible,input:focus-visible,select:focus-visible,tr:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
-main{max-width:1100px;margin:0 auto;padding:0 18px 40px}
-.grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:14px}
-@media(max-width:800px){.grid{grid-template-columns:1fr}}
-.card{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:14px}
-svg text{font-family:inherit}
-#map{width:100%;height:auto;display:block;background:color-mix(in srgb,var(--water) 7%,var(--surf));border-radius:8px}
-.leg{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:14px;color:var(--mut)}
-.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
-.badge{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-weight:600;font-size:14px}
-.big{font:700 34px/1 'Bricolage Grotesque',system-ui,sans-serif}
-.kv{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
-.kv span:first-child{color:var(--mut)}
-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-label{font-size:14px;color:var(--mut);display:grid;gap:3px}
-input,select{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-width:0}
-form button,.btn{grid-column:1/-1;background:var(--paddy);color:#10250f;border:0;border-radius:8px;padding:10px;font:600 16px inherit;font-family:inherit;cursor:pointer}
-.scroll{overflow-x:auto}
-table{border-collapse:collapse;width:100%;min-width:560px}
-th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
-th{color:var(--mut);font-weight:600;font-size:14px}
-tbody tr{cursor:pointer} tbody tr:hover{background:var(--bg)}
-.num{text-align:right;font-variant-numeric:tabular-nums}
-.bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--line);min-width:140px}
-.bar i{display:block}
-.note{color:var(--mut);font-size:14px;max-width:70ch}
-code{background:var(--bg);padding:1px 5px;border-radius:4px}
-#msg{margin-top:10px;font-weight:600}
-.srch{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}.srch input{flex:1;min-width:220px}.kf{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:12px 0}.ni{width:72px;padding:5px}
-dialog{background:var(--surf);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:18px;width:min(520px,92vw);max-height:86vh;overflow:auto}dialog::backdrop{background:rgba(0,0,0,.5)}
-.lk{background:none;border:0;color:var(--water);font:600 16px inherit;font-family:inherit;text-decoration:underline;cursor:pointer;padding:0;text-align:left}
-dialog textarea{width:100%;box-sizing:border-box}
-.gs{max-width:1100px;margin:0 auto;padding:0 18px 8px}.res{background:var(--surf);border:1px solid var(--line);border-radius:12px;margin-top:6px;max-height:320px;overflow:auto}.res button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:10px 14px;background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer}.res button:hover{background:var(--bg)}.res small{color:var(--mut)}
-:root:not([data-theme="light"]){--bg:#060b17;--surf:#0d1628;--ink:#e6f1ff;--mut:#8aa0bf;--line:#1c2b47;--water:#22d3ee;--paddy:#a3e635;--warn:#fbbf24;--crit:#fb7185;--glow:rgba(34,211,238,.16);--panel:rgba(13,22,40,.8);color-scheme:dark}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]):not([data-theme="light"]){--bg:#eaf1fb;--surf:#fff;--ink:#0b1b33;--mut:#51637f;--line:#cfdcef;--water:#0a7ea4;--paddy:#4d7c0f;--warn:#a16207;--crit:#be123c;--glow:rgba(10,126,164,.14);--panel:rgba(255,255,255,.88);color-scheme:light}}
-:root[data-theme="light"]{--bg:#eaf1fb;--surf:#fff;--ink:#0b1b33;--mut:#51637f;--line:#cfdcef;--water:#0a7ea4;--paddy:#4d7c0f;--warn:#a16207;--crit:#be123c;--glow:rgba(10,126,164,.14);--panel:rgba(255,255,255,.88);color-scheme:light}
-[hidden]{display:none!important}
-html{background:var(--bg)}
-body{display:grid;grid-template-columns:232px minmax(0,1fr);grid-template-areas:"nav head" "nav gs" "nav main";grid-template-rows:auto auto 1fr;min-height:100vh;font-family:'IBM Plex Sans',system-ui,sans-serif;background-color:var(--bg);background-image:radial-gradient(1100px 480px at 85% -10%,var(--glow),transparent 60%),linear-gradient(rgba(127,160,200,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(127,160,200,.07) 1px,transparent 1px);background-size:auto,40px 40px,40px 40px;background-attachment:fixed}
-nav{grid-area:nav;position:sticky;top:0;align-self:start;height:100vh;max-width:none;margin:0;padding:22px 14px;display:flex;flex-direction:column;gap:4px;overflow:auto;background:var(--panel);border-right:1px solid var(--line);backdrop-filter:blur(10px)}
-nav::before{content:"IRIGASI";font:700 12px 'Chakra Petch',system-ui,sans-serif;letter-spacing:.35em;color:var(--water);padding:4px 12px 18px}
-nav button{display:flex;align-items:center;gap:12px;width:100%;border:1px solid transparent;background:none;color:var(--mut);border-radius:12px;padding:11px 12px;font:600 15px 'IBM Plex Sans',system-ui,sans-serif;text-align:left;white-space:normal}
-nav button:hover{color:var(--ink);background:var(--glow)}
-nav button[aria-selected="true"]{color:var(--ink);background:var(--glow);border-color:var(--water);box-shadow:0 0 18px var(--glow)}
-nav button[aria-selected="true"] svg{color:var(--water)}
-nav svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-header{grid-area:head;max-width:none;margin:0;padding:26px 28px 4px}
-h1{display:flex;align-items:center;gap:12px;font:700 32px/1 'Chakra Petch',system-ui,sans-serif;letter-spacing:.03em;text-transform:uppercase}
-.logo{width:34px;height:34px;color:var(--water);filter:drop-shadow(0 0 8px var(--water))}
-header p{font-size:14px;max-width:72ch}
-h2{font-family:'Chakra Petch',system-ui,sans-serif;font-weight:600;font-size:16px;letter-spacing:.06em;text-transform:uppercase}
-.gs{grid-area:gs;max-width:none;margin:0;padding:12px 28px}
-main{grid-area:main;max-width:none;margin:0;padding:6px 28px 40px}
-.gs input[type=search]{font-size:17px;padding:14px 16px 14px 46px;border-radius:14px;border:1px solid var(--line);background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") 15px 50%/20px no-repeat}
-.gs input:focus,.gs select:focus{border-color:var(--water);box-shadow:0 0 0 3px var(--glow),0 0 24px var(--glow)}
-.gs select{padding:14px;border-radius:14px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;backdrop-filter:blur(8px);box-shadow:0 0 0 1px rgba(127,170,220,.05) inset,0 12px 32px -20px rgba(0,0,0,.7)}
-#map{background:radial-gradient(circle at 30% 20%,var(--glow),transparent 60%),var(--bg);border:1px solid var(--line)}
-#map .bn circle:nth-of-type(2){filter:drop-shadow(0 0 5px rgba(34,211,238,.6))}
-th{text-transform:uppercase;letter-spacing:.06em;font-size:12px}
-.num,.big{font-family:'IBM Plex Mono',ui-monospace,monospace}
-.big{font-family:'Chakra Petch',system-ui,sans-serif}
-tbody tr:hover{background:var(--glow)}
-input,select,textarea{background:var(--bg);border-color:var(--line);color:var(--ink)}
-form button,.btn{background:linear-gradient(135deg,var(--water),var(--paddy));color:#04121f;box-shadow:0 0 18px var(--glow)}
-.badge{letter-spacing:.02em;box-shadow:0 0 10px -2px currentColor}
-dialog{background:var(--surf);color:var(--ink);border:1px solid var(--water);box-shadow:0 0 40px var(--glow)}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:14px}
-.kpi{position:relative;overflow:hidden}.kpi::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(var(--glow),transparent 70%)}
-.kpi .lab{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
-.kpi .val{font:700 42px/1.1 'Chakra Petch',system-ui,sans-serif;margin:6px 0 2px;color:var(--water)}
-.kpi .sub{font-size:14px;color:var(--mut)}
-.seg{display:flex;height:14px;border-radius:8px;overflow:hidden;background:var(--line);margin:12px 0}.seg i{display:block}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer;margin-top:8px;text-align:left}
-.row:hover{border-color:var(--water);box-shadow:0 0 16px var(--glow)}
-@media(max-width:820px){body{grid-template-columns:1fr;grid-template-areas:"head" "gs" "main";padding-bottom:86px}
-nav{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;flex-direction:row;justify-content:space-around;gap:0;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));border-right:0;border-top:1px solid var(--line);z-index:20}
-nav::before{display:none}
-nav button{flex-direction:column;gap:3px;padding:6px 2px;font-size:10.5px;text-align:center;min-width:0;flex:1;border-radius:10px}
-nav svg{width:22px;height:22px}
-header,.gs,main{padding-left:16px;padding-right:16px}h1{font-size:26px}}
-.chip{display:inline-block;margin:10px 8px 0 0;padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:13px}.chip.accent{border-color:var(--water);color:var(--water);font-weight:600}
-#map.nolb .lb,#map.nols .ls,#map.nolp .lp,#map.nolt .lt{display:none}.sy{width:26px;height:16px;vertical-align:middle;margin-right:5px}
-.ans{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-left:3px solid var(--water);border-radius:10px;background:var(--bg);line-height:1.65;overflow-wrap:anywhere}.ans b{color:var(--water)}.ans a{color:var(--water)}
-.pklist{max-height:260px;overflow:auto;margin-top:8px}.pk{display:flex;gap:10px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--line)}.pk span{flex:1}.pk small{color:var(--mut)}
-.qgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr));gap:14px}
-.sz{transform:scale(var(--zs,1))}
-#map[data-z="0"] .lb,#map[data-z="0"] .lt,#map[data-z="0"] .bl,#map[data-z="0"] .bnl{display:none}
-#map[data-z="1"] .lt,#map[data-z="1"] .bl{display:none}
-#map{touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}#map:active{cursor:grabbing}
-.mz{position:absolute;top:24px;right:24px;display:flex;flex-direction:column;gap:6px;z-index:2}
-.mz button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 20px 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer;backdrop-filter:blur(6px)}.mz button.on{background:var(--water);color:#04121f;border-color:var(--water)}#map.meas{cursor:crosshair}
-#mhud{position:absolute;left:24px;bottom:24px;max-width:min(80%,380px);background:var(--panel);border:1px solid var(--water);border-radius:10px;padding:10px 12px;z-index:2;backdrop-filter:blur(8px);font-size:14px;line-height:1.5}#mhud button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:4px 10px;margin:6px 6px 0 0;cursor:pointer;font:inherit}
-.krow{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,.8fr);gap:10px;align-items:end;padding:12px 0;border-bottom:1px solid var(--line)}
-@media(max-width:820px){.krow{grid-template-columns:1fr}}
-</style></head><body>
-<header><h1><svg class="logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 11-12 0c0-4.5 6-11 6-11z"/><path d="M9 14a3 3 0 003 3"/></svg>Irigasi</h1><p>Model aplikasi untuk petugas irigasi: peta daerah irigasi, debit air tiap bendung, dan laporan tanaman. Semua angka di sini masih data contoh. Satuan: luas dalam hektar (ha), debit dalam liter per detik (lt/dt), panjang jaringan dalam km dan m.</p><div id="prof"></div></header>
-<nav id="tabs" role="tablist">
-<button data-t="ring" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Ringkasan</span></button>
-<button data-t="tny" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 .5c0 1.7-2.5 2-2.5 3.5M12 17h.01"/></svg><span>Tanya</span></button>
-<button data-t="peta" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Peta</span></button>
-<button data-t="debit" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 11-12 0c0-4.5 6-11 6-11z"/></svg><span>Debit</span></button>
-<button data-t="tanam" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-14 14z"/><path d="M5 19l8-8"/></svg><span>Tanaman</span></button>
-<button data-t="lpr" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2m4 0h2M8 16h2m4 0h2"/></svg><span>LPR dan FPR</span></button>
-<button data-t="wil" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg><span>Wilayah</span></button>
-<button data-t="impor" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4l4 4"/><path d="M4 16v4h16v-4"/></svg><span>Data</span></button>
-<button data-t="set" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span>Setelan</span></button></nav>
-<div class="gs"><div class="srch"><input id="gq" type="search" placeholder="Cari dam, petak tersier, bangunan sadap, saluran..." aria-label="Cari di seluruh jaringan"><select id="gt" aria-label="Jenis yang dicari"></select></div><div id="gr" role="status"></div></div>
-<main>
-<section id="t-ring"><div id="ring"></div></section>
-<section id="t-tny" hidden><div id="tny"></div></section>
-<section id="t-peta" class="grid" hidden>
-<div class="card" style="position:relative"><div class="mz"><button data-zm="+" aria-label="Perbesar">+</button><button data-zm="-" aria-label="Perkecil">−</button><button data-zm="0" aria-label="Tampilan penuh" style="font-size:15px">⌂</button><button data-zm="m" aria-label="Ukur jarak" title="Ukur jarak"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="8.5" width="21" height="7" rx="1.5" transform="rotate(-30 12 12)"/><path d="M6.5 14.2l1.2-.7M9.5 12.4l1-.6M12.5 10.6l1.2-.7M15.5 8.8l1-.6"/></svg></button></div><div id="mhud" hidden></div><svg id="map" viewBox="0 0 600 420" role="img" aria-label="Peta skematis daerah irigasi dan bendung"></svg>
-<div class="leg"><span><i class="dot" style="background:var(--water)"></i>Cukup</span><span><i class="dot" style="background:var(--warn)"></i>Waspada</span><span><i class="dot" style="background:var(--crit)"></i>Kritis</span><span><i class="dot" style="background:var(--mut)"></i>Belum ada data</span></div><div class="leg" id="lyr"><label style="display:inline-flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" data-l="b" checked>Bangunan</label><label style="display:inline-flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" data-l="s" checked>Saluran</label><label style="display:inline-flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" data-l="p" checked>Petak</label><label style="display:inline-flex;gap:6px;align-items:center;color:var(--ink)"><input type="checkbox" data-l="t" checked>Label petak</label><label style="display:inline-flex;gap:6px;align-items:center;color:var(--ink)">Peta dasar<select id="bgsel" style="padding:4px 8px"><option value="">Tanpa</option><option value="sat">Satelit (Esri)</option><option value="osm">Jalan (OpenStreetMap)</option></select></label><span id="attr" class="note"></span></div>
-<div class="leg"><span><svg class="sy" viewBox="-14 -8 28 16"><rect x="-13" y="-6" width="26" height="12" rx="3" fill="var(--water)"/><path d="M-9,-2L-6,2L-3,-2L0,2L3,-2L6,2L9,-2" fill="none" stroke="var(--surf)" stroke-width="1.5"/></svg>Bendung</span><span><svg class="sy" viewBox="-9 -9 18 18"><g fill="var(--warn)" stroke="var(--surf)" stroke-width="1.2"><rect x="-6" y="-6" width="12" height="12"/><path d="M0,-6V6" fill="none"/></g></svg>Bangunan bagi</span><span><svg class="sy" viewBox="-9 -9 18 18"><g fill="var(--warn)" stroke="var(--surf)" stroke-width="1.2"><path d="M-6,-6h7v12h-7z"/><path d="M3,-4L8,0L3,4z"/></g></svg>Bagi sadap</span><span><svg class="sy" viewBox="-9 -9 18 18"><g fill="var(--paddy)" stroke="var(--surf)" stroke-width="1.2"><path d="M-5,-5L5,0L-5,5Z"/></g></svg>Bangunan sadap</span><span><svg class="sy" viewBox="-9 -9 18 18"><g fill="#a78bfa" stroke="var(--surf)" stroke-width="1.2"><circle r="6"/><path d="M-3.5,0H3.5M-3.5,-2.5H3.5M-3.5,2.5H3.5" fill="none"/></g></svg>Bangunan ukur</span></div>
-<div class="leg"><span><svg class="sy" viewBox="0 0 28 8"><path d="M0 4H28" stroke="var(--water)" stroke-width="3.6"/></svg>Saluran primer</span><span><svg class="sy" viewBox="0 0 28 8"><path d="M0 4H28" stroke="var(--water)" stroke-width="2.6"/></svg>Sekunder</span><span><svg class="sy" viewBox="0 0 28 8"><path d="M0 4H28" stroke="var(--paddy)" stroke-width="1.7"/></svg>Tersier</span><span><svg class="sy" viewBox="0 0 28 8"><path d="M0 4H28" stroke="var(--paddy)" stroke-width="1"/></svg>Kuarter</span><span><svg class="sy" viewBox="0 0 28 8"><path d="M0 4H28" stroke="var(--mut)" stroke-width="1.4" stroke-dasharray="4 3"/></svg>Pembuang</span></div></div>
-<aside class="card" id="panel"></aside></section>
-<section id="t-debit" class="card" hidden><h2>Debit terakhir tiap bendung</h2><div class="scroll"><table><thead><tr><th>Bendung</th><th>Daerah irigasi</th><th class="num">Debit (lt/dt)</th><th class="num">Kebutuhan (lt/dt)</th><th>Status</th><th>Tanggal</th></tr></thead><tbody id="rows"></tbody></table></div><p class="note">Pilih satu baris untuk membuka bendung itu di peta dan mencatat debit baru.</p></section>
-<section id="t-tanam" class="card" hidden><h2>Laporan tanaman per daerah irigasi</h2><div class="leg" style="margin:0 0 10px"><span><i class="dot" style="background:var(--paddy)"></i>Padi</span><span><i class="dot" style="background:var(--warn)"></i>Jagung</span><span><i class="dot" style="background:var(--water)"></i>Palawija</span><span><i class="dot" style="background:#a78bfa"></i>Tebu</span><span><i class="dot" style="background:var(--mut)"></i>Lainnya</span></div><div class="scroll"><table><thead><tr><th>Daerah irigasi</th><th>Musim</th><th class="num">Padi (ha)</th><th class="num">Jagung (ha)</th><th class="num">Palawija (ha)</th><th class="num">Tebu (ha)</th><th class="num">Lainnya (ha)</th><th>Komposisi</th></tr></thead><tbody id="crop"></tbody></table></div></section>
-<section id="t-lpr" class="card" hidden><h2>LPR dan FPR petak tersier</h2>
-<p class="note">LPR (ha palawija) = luas tanam × koefisien tanaman. Kebutuhan debit di pintu tersier = FPR standar × LPR. FPR realisasi = debit terukur ÷ LPR. Faktor K = FPR realisasi ÷ FPR standar; K di bawah 1 berarti air kurang. Koefisien, FPR standar, dan efisiensi di bawah adalah nilai awal: sesuaikan dengan ketetapan Dinas atau UPTD. Luas dan debit pada tabel bisa diubah langsung.</p>
-<div class="kf" id="kf"></div>
-<div class="srch"><input id="q" type="search" placeholder="Cari nama petak, saluran, atau daerah irigasi" aria-label="Cari petak"><select id="fdi" aria-label="Filter daerah irigasi"></select></div>
-<div id="sum" class="leg" style="color:var(--ink)"></div>
-<div class="scroll"><table style="min-width:1200px"><thead><tr><th>Petak tersier</th><th>Daerah irigasi</th><th>Saluran</th><th class="num">Luas baku (ha)</th><th>Semai (ha)</th><th>Olah lahan (ha)</th><th>Padi tumbuh (ha)</th><th>Palawija (ha)</th><th>Tebu muda (ha)</th><th>Tebu tua (ha)</th><th>Debit terukur (lt/dt)</th><th class="num">LPR (ha.pol)</th><th class="num">Kebutuhan (lt/dt)</th><th class="num">FPR realisasi</th><th class="num">K</th><th>Status</th></tr></thead><tbody id="lb"></tbody></table></div></section>
-<section id="t-wil" hidden><div id="wil"></div></section>
-<section id="t-set" hidden>
-<div class="card" style="margin-bottom:14px"><h2>Info dasar</h2><p class="note">Isi sekali saja. Info ini tampil di bagian atas aplikasi, dipakai sebagai nama daerah irigasi saat impor, dan ikut tersimpan di cadangan JSON.</p>
-<form id="fi"><label>Unit kerja<input name="unit" maxlength="120" placeholder="misalnya UPTD Irigasi"></label><label>Kabupaten atau kota<input name="kab" maxlength="120"></label><label>Nama daerah irigasi<input name="di" maxlength="120"></label><label>Luas baku (ha)<input name="lb" type="number" step="any" min="0"></label><label>Sumber air (sungai)<input name="sumber" maxlength="120"></label><label>Nama petugas<input name="ptg" maxlength="120"></label><label style="grid-column:1/-1">Daftar desa dan kecamatan (satu per baris: Desa, Kecamatan)<textarea name="kec" rows="4" maxlength="20000" placeholder="Purwodadi, Purwodadi&#10;Cowek, Purwodadi" style="font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;width:100%;box-sizing:border-box"></textarea></label><label style="grid-column:1/-1">Nama wilayah (satu nama per baris)<textarea name="wil" rows="4" maxlength="600" placeholder="Wilayah Utara&#10;Wilayah Selatan" style="font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;width:100%;box-sizing:border-box"></textarea></label><button>Simpan info dasar</button></form><div id="imsg" class="note" style="margin-top:8px;font-weight:600"></div></div>
-<div class="card"><h2>Peta dari KMZ atau KML</h2><p class="note">Unggah file dari Google Earth. Aplikasi membaca folder dan penanda di dalamnya, lalu Anda menentukan setiap folder menjadi apa (daerah irigasi, petak, saluran, bendung, atau bangunan). Impor ini mengganti peta dan data jaringan yang ada, jadi unduh cadangan dulu bila perlu. Untuk menggabungkan beberapa file, satukan dulu di Google Earth.</p><label>File KMZ atau KML<input type="file" id="fk" accept=".kmz,.kml"></label><label style="display:flex;gap:8px;align-items:center;margin-top:8px;color:var(--ink)"><input type="checkbox" id="ksm" checked style="width:auto">Baca otomatis dari nama, ikon, dan warna (gaya Google Earth). Nama folder paling atas dipakai sebagai nama daerah irigasi.</label><div id="kw" hidden><div id="kl"></div><button class="btn" id="kgo" style="width:100%;margin-top:12px">Impor ke aplikasi</button></div><div id="kmsg" class="note" style="margin-top:8px;font-weight:600"></div></div></section>
-<section id="t-impor" class="card" hidden><h2>Masukkan data asli</h2>
-<p class="note">Peta: simpan hasil Google Earth (KML) menjadi GeoJSON lewat QGIS. Poligon dibaca sebagai daerah irigasi, garis sebagai saluran, titik sebagai bendung. Nama diambil dari kolom <code>nama</code> atau <code>name</code>.</p>
-<form><label>File peta (.geojson)<input type="file" id="fgeo" accept=".geojson,.json"></label>
-<label>Laporan tanaman (.csv)<input type="file" id="fcsv" accept=".csv,.txt"></label></form>
-<p class="note">Kolom CSV tanaman berurutan: <code>di, musim, padi, jagung, palawija</code> (luas dalam hektare, baris pertama judul).</p>
-<h2 style="margin-top:18px">Cadangan data (JSON)</h2><p class="note">Cadangan berisi semua data: bendung dan debit, peta, laporan tanaman, petak tersier, bangunan dan saluran, pengaturan koefisien, serta catatan. Simpan file ini secara berkala, dan gunakan untuk memindahkan data ke perangkat lain atau ke aplikasi lain.</p><button class="btn" id="bk" style="width:100%">Unduh cadangan (JSON)</button><button class="btn" id="kx" style="width:100%;margin-top:6px">Ekspor peta ke Google Earth (KML)</button><p class="note">KML berisi bendung, bangunan, saluran, dan petak per daerah irigasi lengkap dengan keterangannya. Buka di Google Earth (Pro atau web) atau impor ke Google My Maps.</p><label style="margin-top:12px">Pulihkan dari cadangan (.json)<input type="file" id="frs" accept=".json,application/json"></label>
-<h2 style="margin-top:18px">Impor JSON atau Excel</h2><p class="note">Pilih file JSON dari aplikasi lain, tentukan jenis datanya, lalu cocokkan nama kolomnya. Cadangan dari aplikasi Irigasi ini sendiri dipulihkan lewat pilihan di atas.</p>
-<label>File JSON atau Excel dari aplikasi lain<input type="file" id="fx" accept=".json,application/json,.xlsx,.xls"></label>
-<div id="xb" hidden><p class="note" id="xbinfo"></p><button class="btn" id="xbg" style="width:100%">Impor laporan 10 harian</button><p class="note">Wilayah diambil dari nama Juru Pengairan. Petak yang sudah ada (nama cocok) diperbarui, yang belum ada ditambahkan. Debit bendung dan petak diambil dari formulir 06. Impor ini mengganti data contoh bila masih ada.</p></div>
-<div id="xa" hidden><p class="note" id="xinfo"></p><label>Nama daerah irigasi<input id="xdi" type="text" maxlength="60"></label><button class="btn" id="xsv" style="width:100%;margin-top:8px">Impor data survei (mengganti data contoh)</button><p class="note">Saluran digambar di peta sesuai koordinat aslinya. Wilayah belum terbagi karena file tidak memuat pembagian wilayah. Setelah impor, unduh cadangan JSON agar data tidak hilang saat halaman ditutup.</p></div>
-<div id="xw" hidden><div class="srch"><label style="flex:1;min-width:200px">Bagian data<select id="xs"></select></label><label style="flex:1;min-width:200px">Jenis data<select id="xt"></select></label><label style="flex:1;min-width:200px">Cara impor<select id="xm"><option value="add">Tambahkan ke data yang ada</option><option value="rep">Ganti data jenis ini</option></select></label></div><label id="xhl" hidden style="margin-bottom:10px">Baris judul kolom (nomor baris di Excel)<input id="xh" type="number" min="1" value="1" style="max-width:120px"></label><div class="kf" id="xmap"></div><div class="scroll" id="xpv"></div><button class="btn" id="xgo" style="width:100%;margin-top:8px">Impor data</button></div>
-<button class="btn" id="reset" style="width:100%;margin-top:6px">Muat data contoh (hanya untuk mencoba)</button>
-<button class="btn" id="rms" style="width:100%;margin-top:6px;background:var(--line);color:var(--ink)">Hapus hanya data contoh (DI Contoh ...)</button>
-<button class="btn" id="clr" style="width:100%;margin-top:6px;background:var(--line);color:var(--ink)">Kosongkan semua data peta dan laporan</button>
-<button class="btn" id="wipe" style="width:100%;margin-top:6px;background:var(--crit);color:#fff">Hapus semua data tersimpan di perangkat ini</button>
-<div id="msg" role="status"></div></section>
-</main>
-<dialog id="dlg" aria-label="Detail petak tersier"></dialog>
+:root{--bg:#0a1120;--s1:#111b2f;--s2:#18253d;--ln:#2a3b5c;--tx:#eaf1fb;--mu:#93a6c4;--cy:#22d3ee;--am:#fbbf24;--lm:#a3e635;--rs:#fb7185}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font:15px/1.45 "Plus Jakarta Sans",system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--ln);position:sticky;top:0;background:var(--bg);z-index:20}
+header h1{font-size:17px;font-weight:800;flex:1}
+header small{color:var(--mu);font-weight:400;display:block;font-size:12px}
+.back{background:var(--s2);border:1px solid var(--ln);border-radius:10px;width:40px;height:40px;font-size:20px}
+main{max-width:980px;margin:0 auto;padding:16px}
+.juru{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:14px}
+.jb{background:var(--s1);border:1px solid var(--ln);border-radius:14px;padding:16px;text-align:left}
+.jb:hover{border-color:var(--cy)}
+.jb b{display:block;font-size:19px;font-weight:800}
+.jb span{color:var(--mu);font-size:13px}
+.lead{color:var(--mu);max-width:56ch}
+input[type=search]{width:100%;background:var(--s1);border:1px solid var(--ln);border-radius:12px;color:var(--tx);padding:12px 14px;font:inherit;margin:14px 0}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 12px;width:100%;background:var(--s1);border:1px solid var(--ln);border-radius:12px;padding:12px 14px;margin-bottom:8px;text-align:left}
+.row:hover{border-color:var(--cy)}
+.row b{font-weight:600}.row em{font-style:normal;color:var(--cy);font-weight:800;text-align:right}
+.row span{color:var(--mu);font-size:13px}
+#map{height:56vh;min-height:320px;border-radius:14px;border:1px solid var(--ln);position:relative}
+.coord{position:absolute;left:10px;bottom:10px;z-index:500;background:#0a1120e6;border:1px solid var(--ln);border-radius:8px;padding:5px 10px;font-size:12px;font-variant-numeric:tabular-nums}
+.leg{display:flex;gap:16px;flex-wrap:wrap;color:var(--mu);font-size:13px;margin:10px 2px}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.tabs{display:flex;gap:6px;margin:14px 0}
+.tabs button{flex:1;background:var(--s1);border:1px solid var(--ln);border-radius:10px;padding:10px;font-weight:600}
+.tabs button[aria-selected=true]{background:var(--cy);color:#04141a;border-color:var(--cy)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.card{background:var(--s1);border:1px solid var(--ln);border-radius:12px;padding:12px 14px}
+.card span{color:var(--mu);font-size:13px}.card b{display:block;font-size:24px;font-weight:800}
+.card b small{font-size:13px;color:var(--mu);font-weight:400}
+h2{font-size:15px;margin:20px 0 10px}
+.bar{display:grid;grid-template-columns:96px 1fr 76px;gap:10px;align-items:center;margin:8px 0;font-size:14px}
+.bar div{height:14px;background:var(--s2);border-radius:7px;overflow:hidden}
+.bar div i{display:block;height:100%;border-radius:7px}
+.bar b{text-align:right;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:9px 8px;border-bottom:1px solid var(--ln);text-align:left}
+th{color:var(--mu);font-weight:600;font-size:13px}td:nth-child(n+2){font-variant-numeric:tabular-nums}
+.wrap{overflow-x:auto}
+.note{color:var(--mu);font-size:13px;margin-top:10px}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--s2);color:var(--tx)}
+.ed{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin:16px 0 4px}
+.ed label{display:grid;gap:4px;color:var(--mu);font-size:13px}
+input[type=number]{background:var(--s1);border:1px solid var(--ln);border-radius:10px;color:var(--tx);padding:10px 12px;font:inherit;width:140px}
+.btn{background:var(--s2);border:1px solid var(--ln);border-radius:10px;padding:10px 14px;font-weight:600}
+.btn.p{background:var(--cy);color:#04141a;border-color:var(--cy)}
+.act{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+input[type=file]{color:var(--mu);margin-top:6px;max-width:100%}
+.skw{border:1px solid var(--ln);border-radius:14px;background:#0a1120;overflow:hidden}
+.skw svg{display:block;width:100%;height:64vh;touch-action:none;user-select:none}
+.imp{margin-top:28px;border-top:1px solid var(--ln);padding-top:6px}
+</style>
+</head>
+<body>
+<header><button class="back" id="back" aria-label="Kembali" hidden>‹</button><h1 id="ttl">Irigasi</h1></header>
+<main id="app"><p class="lead">Memuat data…</p></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-const $=s=>document.querySelector(s);
-const LS={sp:[3,'var(--ink)'],ss:[2,'var(--ink)'],st:[1.3,'var(--ink)'],sk:[.8,'var(--ink)'],sb:[1.4,'var(--ink)','6 4']};
-const AR='M-2.2,-2.2L0,0L2.2,-2.2';
-let GEO={desa:[],kec:[]},LOC={},KECM={},KDEF={},MZ={k:1,x:0,y:0},MEAS={on:false,p:[]};
-const SYM2={bs:'<circle r="4.5"/><path d="M3.2,3.2L8.5,8.5M8.5,8.5H5M8.5,8.5V5"/>',bg:'<circle r="5"/><circle r="1.6" fill="var(--ink)"/><path d="M0,5V10M-2.2,7.8L0,10L2.2,7.8"/>',bbs:'<circle r="6.5"/><circle r="4"/><circle r="1.5" fill="var(--ink)"/><path d="M0,6.5V11M-2.2,9L0,11L2.2,9"/>',bt:'<rect x="-3.5" y="-3.5" width="7" height="7"/><path d="M0,-3.5V-9M-2,-7L0,-9L2,-7M0,3.5V9M-2,7L0,9L2,7M3.5,0H9M7,-2L9,0L7,2"/>',bu:'<path d="M-8,0H8M0,-5V5"/><circle r="1.8" fill="var(--ink)"/>',gg:'<path d="M-8,0H8"/><rect x="-3.5" y="-3" width="7" height="6"/><path d="M-1,-3V3M1,-3V3"/>',jb:'<path d="M-8,0H8"/><rect x="-4" y="-2.5" width="8" height="5"/><path d="M-4,2.5L4,-2.5"/>',tj:'<path d="M-8,0H8M-3,-5H3M0,-5V5M-3,5H3"/>',pl:'<path d="M-8,0H8M-3,-3V-6H3V-3M0,-3V-9M-2,-7L0,-9L2,-7"/>',tc:'<path d="M-8,0H8"/><rect x="-3" y="-3" width="6" height="3"/>',mh:'<path d="M-8,0H8"/><rect x="-3" y="-1.5" width="6" height="3"/>',bl:'<circle r="3"/>'};
-const SYM={bs:'<path d="M-5,-5L5,0L-5,5Z"/>',bbs:'<path d="M-6,-6h7v12h-7z"/><path d="M3,-4L8,0L3,4z"/>',bg:'<rect x="-6" y="-6" width="12" height="12"/><path d="M0,-6V6" fill="none"/>',bu:'<circle r="6"/><path d="M-3.5,0H3.5M-3.5,-2.5H3.5M-3.5,2.5H3.5" fill="none"/>',bt:'<rect x="-4" y="-4" width="8" height="8"/>',bl:'<circle r="3.5"/>'};
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const iso=d=>d.toISOString().slice(0,10);
-let D,C,sel=null,S={};
-try{S=JSON.parse(localStorage.getItem('pi_debit')||'{}')}catch(e){S={}}
-const sampleCrops=()=>[
-{di:'DI Contoh Barat',m:'MT I',padi:980,jagung:120,pal:60},{di:'DI Contoh Barat',m:'MT II',padi:760,jagung:260,pal:110},
-{di:'DI Contoh Tengah',m:'MT I',padi:720,jagung:140,pal:50},{di:'DI Contoh Tengah',m:'MT II',padi:540,jagung:230,pal:90},
-{di:'DI Contoh Timur',m:'MT I',padi:510,jagung:100,pal:70},{di:'DI Contoh Timur',m:'MT II',padi:300,jagung:210,pal:120}];
-function sample(){
- const bn=[{id:'B1',nama:'Bendung Contoh 1',di:'DI Contoh Barat',x:150,y:70,keb:2400,base:2600},
- {id:'B2',nama:'Bendung Contoh 2',di:'DI Contoh Tengah',x:330,y:110,keb:3100,base:2500},
- {id:'B3',nama:'Bendung Contoh 3',di:'DI Contoh Timur',x:480,y:130,keb:1800,base:900},
- {id:'B4',nama:'Bendung Contoh 4',di:'DI Contoh Barat',x:120,y:250,keb:1500,base:1600},
- {id:'B5',nama:'Bendung Contoh 5',di:'DI Contoh Tengah',x:370,y:300,keb:2200,base:1900}];
- bn.forEach((b,k)=>{b.debit=[];for(let i=0;i<14;i++){const d=new Date();d.setDate(d.getDate()-13+i);b.debit.push({t:iso(d),v:+(b.base*(1+.08*Math.sin(i*.9+k*1.7))).toFixed(0)})}});
- return{bn,
- di:[{nama:'DI Contoh Barat',luas:'1.250 ha',pts:[[40,60],[230,40],[260,200],[210,330],[60,310],[30,180]]},
- {nama:'DI Contoh Tengah',luas:'980 ha',pts:[[236,44],[420,70],[440,230],[300,260],[264,200]]},
- {nama:'DI Contoh Timur',luas:'760 ha',pts:[[430,80],[570,110],[560,300],[400,350],[310,270],[444,236]]}],
- sal:[[[150,70],[145,150],[140,250]],[[330,110],[320,200],[370,300]],[[480,130],[490,220],[470,300]],[[150,70],[210,120],[330,110]],[[330,110],[400,120],[480,130]]]};
+let DB,map,st={j:null,d:null,tab:'ring'},OV={},UP=null,MSG='';
+const $=s=>document.querySelector(s),app=$('#app'),n1=(x,d=1)=>(+x||0).toLocaleString('id-ID',{maximumFractionDigits:d}),
+esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const baku=d=>{if(OV[d.nama]!=null)return OV[d.nama];if(d.bakuEdit!=null)return d.bakuEdit;const x=d.tanam&&d.tanam.baku;if(!x)return d.bakuKmz;return Math.abs(x-d.bakuKmz)/x>.15?Math.max(x,d.bakuKmz):x};
+try{st.j=localStorage.getItem('juru');OV=JSON.parse(localStorage.getItem('ov')||'{}');UP=JSON.parse(localStorage.getItem('up')||'null')}catch(e){}
+fetch('data.json').then(r=>r.json()).then(j=>{DB=j;applyUp();route()}).catch(()=>app.innerHTML='<p class="lead">Data gagal dimuat. Pastikan data.json ada di folder yang sama dengan index.html.</p>');
+$('#back').onclick=()=>{if(st.d){st.d=null}else{st.j=null;try{localStorage.removeItem('juru')}catch(e){}}route()};
+function route(){if(map){map.remove();map=null}$('#back').hidden=!st.j;st.d?detail():st.j?list():home()}
+function home(){
+  $('#ttl').innerHTML='Irigasi Purwosari<small>Periode '+esc(DB.periode)+'</small>';
+  app.innerHTML='<p class="lead">Pilih juru pengairan untuk melihat daerah irigasi yang menjadi tanggung jawab Anda.</p><div class="juru">'+
+  DB.juru.map(j=>{const a=DB.di.filter(d=>d.juru===j);return `<button class="jb" data-j="${esc(j)}"><b>${esc(j)}</b><span>${a.length} daerah irigasi · ${n1(a.reduce((s,d)=>s+baku(d),0),0)} ha</span></button>`}).join('')+'</div>';
+  app.querySelectorAll('.jb').forEach(b=>b.onclick=()=>{st.j=b.dataset.j;try{localStorage.setItem('juru',st.j)}catch(e){}route()});xl();
 }
-function init(d,c){D=d;C=c;sel=null;MZ.k=1;MZ.x=0;MZ.y=0;MEAS.p=[];MEAS.on=false;D.bn.forEach(b=>{(S[b.id]||[]).forEach(e=>{if(!b.debit.some(x=>x.t===e.t))b.debit.push(e)});b.debit.sort((a,c)=>a.t<c.t?-1:1)});all()}
-const last=b=>b.debit.length?b.debit[b.debit.length-1]:null;
-function stat(b){const l=last(b);if(!l||!b.keb)return['Belum ada data','var(--mut)'];const r=l.v/b.keb;return r>=1?['Cukup','var(--water)']:r>=.7?['Waspada','var(--warn)']:['Kritis','var(--crit)']}
-const fmt=n=>Number(n).toLocaleString('id-ID');
-function map(){
- let h='<defs><pattern id="pSawah" width="10" height="6" patternUnits="userSpaceOnUse"><rect width="10" height="6" fill="var(--paddy)" fill-opacity=".14"/><path d="M0,0H10M0,3H10M5,0V3M0,3V6M10,3V6" stroke="var(--ink)" stroke-opacity=".4" stroke-width=".5" fill="none"/></pattern></defs>';
- D.di.forEach((d,i)=>{const p=d.pts,cx=p.reduce((a,q)=>a+q[0],0)/p.length,cy=p.reduce((a,q)=>a+q[1],0)/p.length;
-  h+=`<polygon class="lp" data-pi="${i}" vector-effect="non-scaling-stroke" points="${p.map(q=>q.join(',')).join(' ')}" ${d.nolabel?'fill="url(#pSawah)" stroke="var(--ink)" stroke-opacity=".55" stroke-width=".8"':'fill="var(--water)" fill-opacity=".07" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="1 5"'}/>${d.nolabel?'':`<g transform="translate(${cx} ${cy})"><g class="sz"><text text-anchor="middle" font-size="13" fill="var(--mut)" paint-order="stroke" stroke="var(--bg)" stroke-width="3">${esc(d.nama)}</text></g></g>`}`});
- D.sal.forEach((l,i)=>{const st=LS[(D.salk||[])[i]]||LS.ss;h+=`<polyline class="ls" data-s="${i}" vector-effect="non-scaling-stroke" points="${l.map(q=>q.join(',')).join(' ')}" fill="none" stroke="${st[1]}" stroke-width="${st[0]}" stroke-linecap="round"${st[2]?` stroke-dasharray="${st[2]}"`:''}/><polyline class="ls" data-s="${i}" vector-effect="non-scaling-stroke" points="${l.map(q=>q.join(',')).join(' ')}" fill="none" stroke="transparent" stroke-width="12" style="cursor:pointer"/>`});
- D.bn.forEach(b=>{if(b.np)return;const s=stat(b)[1];
-  h+=`<g class="bn" data-id="${esc(b.id)}" tabindex="0" role="button" aria-label="${esc(b.nama)}" style="cursor:pointer"><g transform="translate(${b.x} ${b.y})"><circle class="sz" r="${sel===b.id?17:0}" fill="none" stroke="var(--ink)" stroke-width="2"/></g><g transform="translate(${b.x} ${b.y})"><g class="sz" style="filter:drop-shadow(0 0 5px ${s})"><path d="M-15,-4H15M-15,4H15" stroke="var(--ink)" stroke-width="1.2" fill="none"/><path d="M0,-10V10" stroke="${s}" stroke-width="4.5" stroke-linecap="round"/><path d="M-5,-10L0,-6L5,-10" fill="none" stroke="var(--ink)" stroke-width="1.2"/><path d="M0,10V15M-2.2,12.8L0,15L2.2,12.8" fill="none" stroke="var(--ink)" stroke-width="1.2"/></g></g><g transform="translate(${b.x} ${b.y})"><g class="sz"><text class="bnl" y="-18" text-anchor="middle" font-size="12" font-weight="600" fill="var(--ink)" paint-order="stroke" stroke="var(--bg)" stroke-width="3">${esc(b.nama)}</text></g></g></g>`});
- try{h+=plabels()}catch(e){}try{h+=bld()}catch(e){}
- $('#map').innerHTML=h.replace('</defs>','</defs><g id="mvp"><g id="bg"></g>')+'</g>';applyZoom();
+function list(){
+  $('#ttl').innerHTML='Juru '+esc(st.j)+'<small>Pilih daerah irigasi</small>';
+  const a=DB.di.filter(d=>d.juru===st.j);
+  app.innerHTML='<input type="search" id="q" placeholder="Cari daerah irigasi" aria-label="Cari daerah irigasi"><div id="ls"></div>';
+  const draw=()=>{const q=$('#q').value.toLowerCase();$('#ls').innerHTML=a.filter(d=>d.nama.toLowerCase().includes(q)).map(d=>`<button class="row" data-i="${d.id}"><b>DI ${esc(d.nama)}</b><em>${n1(baku(d),0)} ha</em><span>${n1(d.panjangKm,2)} km saluran · ${d.bangunan.length} bangunan</span><span style="text-align:right">peta ${d.tahun}</span></button>`).join('')||'<p class="lead">Tidak ada yang cocok.</p>';
+    $('#ls').querySelectorAll('.row').forEach(b=>b.onclick=()=>{st.d=DB.di.find(d=>d.id==b.dataset.i);st.tab='ring';route()})};
+  $('#q').oninput=draw;draw();
 }
-function spark(b){const v=b.debit.slice(-14).map(x=>x.v);if(v.length<2)return'';
- const mx=Math.max(...v,b.keb||0)*1.1,W=280,H=80,X=i=>i*W/(v.length-1),Y=y=>H-y/mx*H;
- return`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Debit 14 hari terakhir"><line x1="0" x2="${W}" y1="${Y(b.keb||0)}" y2="${Y(b.keb||0)}" stroke="var(--crit)" stroke-dasharray="4 3"/><polyline fill="none" stroke="var(--water)" stroke-width="2.5" points="${v.map((y,i)=>X(i)+','+Y(y)).join(' ')}"/></svg><div class="note">Garis putus-putus: kebutuhan air. Garis biru: debit 14 hari terakhir.</div>`}
-function panel(){
- const p=$('#panel');
- if(!sel){const c={};D.bn.forEach(b=>{const s=stat(b)[0];c[s]=(c[s]||0)+1});
-  p.innerHTML=`<h2>Ringkasan</h2><div class="big">${D.bn.length}</div><div class="note">bendung tercatat</div>`+Object.entries(c).map(([k,v])=>`<div class="kv"><span>${k}</span><span>${v}</span></div>`).join('')+`<p class="note">Pilih sebuah bendung pada peta untuk melihat debit dan mencatat pengukuran baru.</p>`;return}
- const b=D.bn.find(x=>x.id===sel),s=stat(b),l=last(b);
- p.innerHTML=`<h2>${esc(b.nama)}</h2><span class="badge" style="background:${s[1]}">${s[0]}</span>
- <div class="kv"><span>Daerah irigasi</span><span>${esc(b.di||'-')}</span></div>
- <div class="kv"><span>Debit terakhir</span><span>${l?l.v+' lt/dt ('+l.t+')':'-'}</span></div>
- <div class="kv"><span>Kebutuhan</span><span>${b.keb?b.keb+' lt/dt':'-'}</span></div>${spark(b)}
- ${b.lo!=null?`<div class="kv"><span>Buka di</span><span><a href="https://www.google.com/maps?q=${b.la},${b.lo}" target="_blank" rel="noopener">Google Maps</a> · <a href="https://earth.google.com/web/@${b.la},${b.lo},0a,800d,35y,0h,0t,0r" target="_blank" rel="noopener">Google Earth</a></span></div>`:''}<form id="f"><label>Tanggal<input type="date" name="t" value="${iso(new Date())}" required></label><label>Debit (lt/dt)<input type="number" name="v" step="0.1" min="0" required></label><button>Simpan debit</button></form>`;
+function detail(){
+  const d=st.d,t=d.tanam;
+  $('#ttl').innerHTML='DI '+esc(d.nama)+'<small>Juru '+esc(d.juru)+' · peta '+d.tahun+'</small>';
+  app.innerHTML='<div id="map"><div class="coord" id="co">Geser peta untuk melihat koordinat</div></div>'+
+  '<div class="leg"><span><i style="background:var(--am)"></i>Baku sawah</span><span><i style="background:var(--cy)"></i>Saluran</span><span><i style="background:var(--lm);border-radius:50%"></i>Bangunan</span></div>'+
+  '<div class="tabs" role="tablist">'+[['ring','Ringkasan'],['skm','Skema'],['deb','Debit'],['bgn','Bangunan']].map(x=>`<button role="tab" data-t="${x[0]}" aria-selected="${st.tab==x[0]}">${x[1]}</button>`).join('')+'</div><div id="tb"></div>';
+  app.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{st.tab=b.dataset.t;app.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x==b));tab()});
+  drawMap();tab();
 }
-function rows(){
- $('#rows').innerHTML=D.bn.map(b=>{const l=last(b),s=stat(b);return`<tr data-id="${esc(b.id)}" tabindex="0"><td>${esc(b.nama)}</td><td>${esc(b.di||'-')}</td><td class="num">${l?l.v:'-'}</td><td class="num">${b.keb||'-'}</td><td><span class="badge" style="background:${s[1]}">${s[0]}</span></td><td>${l?l.t:'-'}</td></tr>`}).join('');
- $('#crop').innerHTML=C.map(r=>{const tb=r.teb||0,ln=r.lain||0,t=r.padi+r.jagung+r.pal+tb+ln||1;return`<tr><td>${esc(r.di)}</td><td>${esc(r.m)}</td><td class="num">${fmt(r.padi)}</td><td class="num">${fmt(r.jagung)}</td><td class="num">${fmt(r.pal)}</td><td class="num">${fmt(tb)}</td><td class="num">${fmt(ln)}</td><td><div class="bar"><i style="width:${r.padi/t*100}%;background:var(--paddy)"></i><i style="width:${r.jagung/t*100}%;background:var(--warn)"></i><i style="width:${r.pal/t*100}%;background:var(--water)"></i><i style="width:${tb/t*100}%;background:#a78bfa"></i><i style="width:${ln/t*100}%;background:var(--mut)"></i></div></td></tr>`}).join('')||'<tr><td colspan="8">Belum ada laporan tanaman. Masukkan file CSV di tab Masukkan data.</td></tr>';
+function drawMap(){
+  const d=st.d,sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Esri'}),
+  dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'CARTO · OSM'});
+  map=L.map('map',{layers:[sat]});L.control.layers({'Satelit':sat,'Peta gelap':dark},null,{collapsed:true}).addTo(map);
+  const g=L.featureGroup().addTo(map);
+  d.areal.forEach(a=>L.polygon(a[2],{color:'#fbbf24',weight:2,fillOpacity:.3}).bindPopup(`<b>${esc(a[0]||'Petak')}</b><br>${n1(a[1],2)} ha`).addTo(g));
+  d.saluran.forEach(s=>L.polyline(s[2],{color:'#22d3ee',weight:3.5}).bindPopup(`<b>${esc(s[0]||'Saluran')}</b><br>${n1(s[1],0)} m`).addTo(g));
+  d.bangunan.forEach(b=>L.circleMarker([b[1],b[2]],{radius:7,color:'#04141a',weight:2,fillColor:'#a3e635',fillOpacity:1}).bindPopup(`<b>${esc(b[0]||'Bangunan')}</b><br>${b[1]}, ${b[2]}`).addTo(g));
+  if(g.getBounds().isValid())map.fitBounds(g.getBounds(),{padding:[20,20]});
+  const co=$('#co'),show=p=>co.textContent=p.lat.toFixed(5)+', '+p.lng.toFixed(5);
+  map.on('mousemove',e=>show(e.latlng));map.on('moveend',()=>show(map.getCenter()));
+  map.on('click',e=>show(e.latlng));map._g=g;
 }
-function all(){map();panel();rows();try{ringRender()}catch(e){}}
-function pick(id){sel=id;const b=D.bn.find(x=>x.id===id);if(b&&!b.np&&b.x!=null&&MZ.k<4){MZ.k=6;MZ.x=300-b.x*6;MZ.y=210-b.y*6}all();show('peta')}
-function show(t){if(t==='wil')wilRender();if(t==='ring')ringRender();if(t==='tny')tnyRender();window.scrollTo(0,0);document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));document.querySelectorAll('main>section').forEach(s=>s.hidden=s.id!=='t-'+t)}
-$('#tabs').onclick=e=>{const b=e.target.closest('button'),t=b&&b.dataset.t;if(t)show(t)};
-const act=e=>{const g=e.target.closest('[data-id]');if(g&&(e.type==='click'||e.key==='Enter'))pick(g.dataset.id)};
-$('#map').addEventListener('click',act);$('#map').addEventListener('keydown',act);
-$('#rows').addEventListener('click',act);$('#rows').addEventListener('keydown',act);
-$('#panel').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target),b=D.bn.find(x=>x.id===sel),en={t:f.get('t'),v:+f.get('v')};
- b.debit=b.debit.filter(x=>x.t!==en.t);b.debit.push(en);b.debit.sort((a,c)=>a.t<c.t?-1:1);
- S[b.id]=(S[b.id]||[]).filter(x=>x.t!==en.t).concat(en);try{localStorage.setItem('pi_debit',JSON.stringify(S))}catch(x){}all()});
-const say=(t,bad)=>{$('#msg').textContent=t;$('#msg').style.color=bad?'var(--crit)':'var(--water)'};
-$('#fgeo').onchange=async e=>{const f=e.target.files[0];if(!f)return;
- try{const g=JSON.parse(await f.text()),fs=g.features||[g],co=[];
-  const walk=a=>typeof a[0]==='number'?co.push(a):a.forEach(walk);fs.forEach(x=>x.geometry&&walk(x.geometry.coordinates));
-  if(!co.length)throw 0;
-  const xs=co.map(c=>c[0]),ys=co.map(c=>c[1]),x0=Math.min(...xs),y1=Math.max(...ys),k=Math.min(560/((Math.max(...xs)-x0)||1),380/((y1-Math.min(...ys))||1));
-  const P=c=>[+(20+(c[0]-x0)*k).toFixed(1),+(20+(y1-c[1])*k).toFixed(1)],nd={bn:[],di:[],sal:[]};
-  fs.forEach(x=>{const m=x.geometry;if(!m)return;const p=x.properties||{},n=p.nama||p.name||p.Name||'Tanpa nama',a=m.coordinates;
-   if(m.type==='Point')nd.bn.push({id:'I'+nd.bn.length,nama:n,di:p.di||'',x:P(a)[0],y:P(a)[1],keb:+p.kebutuhan||0,debit:[]});
-   else if(m.type==='LineString')nd.sal.push(a.map(P));else if(m.type==='MultiLineString')a.forEach(l=>nd.sal.push(l.map(P)));
-   else if(m.type==='Polygon')nd.di.push({nama:n,luas:p.luas||'-',pts:a[0].map(P)});else if(m.type==='MultiPolygon')a.forEach(q=>nd.di.push({nama:n,luas:p.luas||'-',pts:q[0].map(P)}))});
-  init(nd,C);say(`Peta terbaca: ${nd.di.length} daerah irigasi, ${nd.sal.length} saluran, ${nd.bn.length} bendung.`)}
- catch(x){say('File peta tidak terbaca. Pastikan formatnya GeoJSON.',1)}};
-$('#fcsv').onchange=async e=>{const f=e.target.files[0];if(!f)return;
- const r=(await f.text()).split(/\r?\n/).slice(1).map(l=>l.split(/[,;]/).map(s=>s.trim())).filter(a=>a.length>=5&&a[0]).map(a=>({di:a[0],m:a[1],padi:+a[2]||0,jagung:+a[3]||0,pal:+a[4]||0}));
- if(!r.length)return say('Tidak ada baris yang terbaca. Cek urutan kolom CSV.',1);C=r;all();say(`${r.length} baris laporan tanaman terbaca.`)};
-$('#reset').onclick=()=>{init(sample(),sampleCrops());say('Data contoh dipulihkan.')};
-init(sample(),sampleCrops());
-const KP={sem:1,olah:6,tumb:4,pal:1,tm:1.5,tt:1,fpr:.2,ei:.7};
-const KL={sem:'Koef. semai',olah:'Koef. olah lahan',tumb:'Koef. padi tumbuh',pal:'Koef. palawija',tm:'Koef. tebu muda',tt:'Koef. tebu tua',fpr:'FPR standar (lt/dt/ha.pol)',ei:'Efisiensi irigasi'};
-const B='DI Contoh Barat',T='DI Contoh Tengah',M='DI Contoh Timur',QF=[1.05,.9,.65,1.1,.8,.5,.95,.7,1,.85];
-const lpr=p=>p.sem*KP.sem+p.olah*KP.olah+p.tumb*KP.tumb+p.pal*KP.pal+p.tm*KP.tm+p.tt*KP.tt;
-const PT=[['A1 Kanan',B,'Sekunder A',42,0,6,30,6,0,0],['A2 Kiri',B,'Sekunder A',38,0,0,32,6,0,0],['A3 Kanan',B,'Sekunder B',55,4,0,0,35,0,16],['B1 Kanan',T,'Sekunder C',60,0,8,44,8,0,0],['B2 Kiri',T,'Sekunder C',47,0,0,28,19,0,0],['B3 Kanan',T,'Sekunder D',36,3,0,22,0,11,0],['C1 Kanan',M,'Sekunder E',52,0,10,34,8,0,0],['C2 Kiri',M,'Sekunder E',44,0,0,20,24,0,0],['C3 Kanan',M,'Sekunder F',58,0,0,40,6,12,0],['C4 Kiri',M,'Sekunder F',33,5,0,0,28,0,0]].map((r,i)=>{const p={n:r[0],di:r[1],sal:r[2],lb:r[3],sem:r[4],olah:r[5],tumb:r[6],pal:r[7],tm:r[8],tt:r[9]};p.q=+(lpr(p)*KP.fpr*QF[i]).toFixed(1);return p});
-const KS=k=>k>=1?['Cukup','var(--water)']:k>=.7?['Waspada','var(--warn)']:['Kritis','var(--crit)'];
-function calc(tr){const p=PT[tr.dataset.i],l=lpr(p),o=tr.querySelectorAll('.o');if(!l){o.forEach(c=>c.textContent='-');o[4].innerHTML='-';return}
- const f=p.q/l,k=f/KP.fpr,s=KS(k);o[0].textContent=l.toFixed(1);o[1].textContent=(l*KP.fpr).toFixed(1);o[2].textContent=f.toFixed(3);o[3].textContent=k.toFixed(2);o[4].innerHTML=`<span class="badge" style="background:${s[1]}">${s[0]}</span>`}
-function lsum(){let n=0,tl=0,tq=0;document.querySelectorAll('#lb tr').forEach(tr=>{if(tr.hidden)return;const p=PT[tr.dataset.i];n++;tl+=lpr(p);tq+=p.q});
- const kb=tl*KP.fpr,k=kb?tq/kb:0,s=KS(k);$('#sum').innerHTML=`<span>Petak tampil: <b>${n}</b></span><span>LPR total: <b>${tl.toFixed(1)}</b> ha.pol</span><span>Kebutuhan di pintu tersier: <b>${kb.toFixed(1)}</b> lt/dt</span><span>Kebutuhan di intake: <b>${(kb/KP.ei).toFixed(1)}</b> lt/dt</span><span>Debit terukur: <b>${tq.toFixed(1)}</b> lt/dt</span><span>K gabungan: <b>${kb?k.toFixed(2):'-'}</b>${kb?` (${s[0]})`:''}</span>`}
-function lfilter(){const q=$('#q').value.toLowerCase(),d=$('#fdi').value;document.querySelectorAll('#lb tr').forEach(tr=>{const p=PT[tr.dataset.i];tr.hidden=!((p.n+' '+p.sal+' '+p.di).toLowerCase().includes(q)&&(!d||p.di===d))});lsum()}
-$('#kf').innerHTML=Object.keys(KP).map(k=>`<label>${KL[k]}<input class="ni" style="width:100%" type="number" min="0" step="any" data-p="${k}" value="${KP[k]}"></label>`).join('');
-$('#fdi').innerHTML='<option value="">Semua daerah irigasi</option>'+[...new Set(PT.map(p=>p.di))].map(d=>`<option>${esc(d)}</option>`).join('');
-$('#lb').innerHTML=PT.map((p,i)=>`<tr data-i="${i}" style="cursor:pointer"><td><button class="lk" aria-label="Buka detail petak ${esc(p.n)}">${esc(p.n)}</button></td><td>${esc(p.di)}</td><td>${esc(p.sal)}</td><td class="num">${p.lb}</td>`+['sem','olah','tumb','pal','tm','tt','q'].map(k=>`<td><input class="ni" type="number" min="0" step="any" data-k="${k}" value="${p[k]}" aria-label="${k} ${esc(p.n)}"></td>`).join('')+'<td class="num o"></td>'.repeat(5)+'</tr>').join('');
-document.querySelectorAll('#lb tr').forEach(calc);lsum();
-$('#lb').addEventListener('input',e=>{const k=e.target.dataset.k;if(!k)return;const tr=e.target.closest('tr');PT[tr.dataset.i][k]=+e.target.value||0;calc(tr);lsum()});
-$('#kf').addEventListener('input',e=>{const k=e.target.dataset.p;if(!k)return;KP[k]=+e.target.value||0;document.querySelectorAll('#lb tr').forEach(calc);lsum()});
-$('#q').oninput=lfilter;$('#fdi').onchange=lfilter;
-let CT={};try{CT=JSON.parse(localStorage.getItem('pi_cat')||'{}')}catch(e){}
-const dlg=$('#dlg');
-function det(i){const p=PT[i],l=lpr(p),keb=l*KP.fpr,f=l?p.q/l:0,k=l?f/KP.fpr:0,s=l?KS(k):['-','var(--mut)'],tot=p.sem+p.olah+p.tumb+p.pal+p.tm+p.tt,key=p.di+'|'+p.n;
- const fs=[['Semai','sem'],['Olah lahan','olah'],['Padi tumbuh','tumb'],['Palawija','pal'],['Tebu muda','tm'],['Tebu tua','tt']];
- dlg.innerHTML=`<h2>Petak ${esc(p.n)}</h2><span class="badge" style="background:${s[1]}">${s[0]}</span>
-<div class="kv"><span>Daerah irigasi</span><span>${esc(p.di)}</span></div>
-<div class="kv"><span>Saluran</span><span>${esc(p.sal)}</span></div>
-<div class="kv"><span>Luas baku</span><span>${p.lb} ha</span></div>
-<div class="kv"><span>Luas tanam saat ini</span><span>${tot} ha (${p.lb?(tot/p.lb*100).toFixed(0):0}% dari luas baku)</span></div>
-<h2 style="margin-top:14px">Perhitungan LPR</h2><div class="scroll"><table style="min-width:0"><thead><tr><th>Fase</th><th class="num">Luas (ha)</th><th class="num">Koef.</th><th class="num">LPR</th></tr></thead><tbody>${fs.map(([n,k2])=>`<tr style="cursor:default"><td>${n}</td><td class="num">${p[k2]}</td><td class="num">${KP[k2]}</td><td class="num">${(p[k2]*KP[k2]).toFixed(1)}</td></tr>`).join('')}<tr style="cursor:default"><td><b>Total</b></td><td class="num"><b>${tot}</b></td><td></td><td class="num"><b>${l.toFixed(1)}</b></td></tr></tbody></table></div>
-<div class="kv"><span>FPR standar</span><span>${KP.fpr} lt/dt/ha.pol</span></div>
-<div class="kv"><span>Kebutuhan di pintu tersier</span><span>${keb.toFixed(1)} lt/dt</span></div>
-<div class="kv"><span>Kebutuhan di intake</span><span>${(keb/KP.ei).toFixed(1)} lt/dt</span></div>
-<div class="kv"><span>Debit terukur</span><span>${p.q} lt/dt</span></div>
-<div class="kv"><span>Selisih (terukur dikurangi kebutuhan)</span><span>${(p.q-keb).toFixed(1)} lt/dt</span></div>
-<div class="kv"><span>FPR realisasi / Faktor K</span><span>${f.toFixed(3)} / ${k.toFixed(2)}</span></div>
-<label style="margin-top:12px">Catatan petugas<textarea id="cat" rows="3" data-k="${esc(key)}" style="font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${esc(CT[key]||'')}</textarea></label>
-<form method="dialog" style="grid-template-columns:1fr"><button>Tutup</button></form>`;
- dlg.showModal()}
-$('#lb').addEventListener('click',e=>{if(e.target.closest('input'))return;const tr=e.target.closest('tr');if(tr)det(tr.dataset.i)});
-dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
-dlg.addEventListener('input',e=>{if(e.target.id!=='cat')return;CT[e.target.dataset.k]=e.target.value;try{localStorage.setItem('pi_cat',JSON.stringify(CT))}catch(x){}});
-const TY={bendung:'Bendung (dam)',petak:'Petak tersier',bs:'Bangunan sadap',bbs:'Bangunan bagi sadap',bu:'Bangunan ukur',sp:'Saluran primer',ss:'Saluran sekunder',st:'Saluran tersier',sk:'Saluran kuarter',bg:'Bangunan bagi',bt:'Box tersier atau kuarter',bl:'Bangunan lain',sb:'Saluran pembuang',gg:'Gorong-gorong',jb:'Jembatan',tj:'Terjunan',pl:'Pelimpah samping',tc:'Tangga cuci',mh:'Tempat mandi hewan'};
-const WB={B1:1,B4:2,B2:1,B5:2,B3:1},WP=[1,1,2,1,2,2,1,1,2,2],CK=['Baik','Baik','Rusak ringan','Baik','Rusak berat'],JR=[];let jc=0,GS=[],GD=[];
-const add=(k,n,di,w,ind,pj)=>{jc++;JR.push({k,n,di,w,ind,pj:pj===undefined?300+(jc*137)%700:pj,kd:CK[jc%5]})};
-[[B,'Bendung Contoh 1'],[T,'Bendung Contoh 2'],[M,'Bendung Contoh 3']].forEach(([d,b],i)=>{const s=d.replace('DI Contoh ','');add('sp','Saluran Primer '+s,d,1,b,[2400,1800,2100][i]);add('bu','Bangunan Ukur Primer '+s,d,1,'Saluran Primer '+s,null)});
-[...new Map(PT.map((p,i)=>[p.sal,[p.di,WP[i]]])).entries()].forEach(([s,[d,w]])=>{add('ss',s,d,w,'Saluran Primer '+d.replace('DI Contoh ',''));add('bbs','BBS '+s,d,w,s);add('bu','Bangunan Ukur '+s,d,w,s,null)});
-PT.forEach((p,i)=>{const w=WP[i];add('bs','BS '+p.n,p.di,w,p.sal);add('st','Saluran Tersier '+p.n,p.di,w,'BS '+p.n);add('sk','Saluran Kuarter '+p.n+'-1',p.di,w,'Saluran Tersier '+p.n);add('sk','Saluran Kuarter '+p.n+'-2',p.di,w,'Saluran Tersier '+p.n)});
-const idx=()=>[...D.bn.map(b=>({k:'bendung',n:b.nama,di:b.di,w:WB[b.id]||0,ref:b.id})),...PT.map((p,i)=>({k:'petak',n:p.n,di:p.di,w:WP[i],ref:i})),...JR];
-function idet(it){if(/^s/.test(it.k))return sinfo(it);const A=idx();GD=A;const pi=A.findIndex(x=>x.n===it.ind);
- dlg.innerHTML=`<h2>${esc(it.n)}</h2><div class="kv"><span>Jenis</span><span>${TY[it.k]}</span></div><div class="kv"><span>Daerah irigasi</span><span>${esc(it.di)}</span></div><div class="kv"><span>Wilayah</span><span>${esc(wl(it.w))}</span></div><div class="kv"><span>Induk</span><span>${pi>=0?`<button class="lk" data-g="${pi}">${esc(it.ind)}</button>`:esc(it.ind||'-')}</span></div><div class="kv"><span>Panjang</span><span>${fm(it.pj)}</span></div><div class="kv"><span>Kondisi</span><span>${esc(it.kd)}</span></div>${it.nom?`<div class="kv"><span>Nomenklatur</span><span>${esc(it.nom)}</span></div>`:''}${it.q!=null?`<div class="kv"><span>Debit rencana (Q)</span><span>${it.q} lt/dt</span></div>`:''}${it.ls!=null?`<div class="kv"><span>Luas layanan</span><span>${it.ls} ha</span></div>`:''}${it.th?`<div class="kv"><span>Tahun dibangun</span><span>${esc(it.th)}</span></div>`:''}${it.src?'':'<p class="note">Panjang dan kondisi masih data contoh.</p>'}${it.lo!=null?`<div class="kv"><span>Buka di</span><span><a href="https://www.google.com/maps?q=${it.la},${it.lo}" target="_blank" rel="noopener">Google Maps</a> · <a href="https://earth.google.com/web/@${it.la},${it.lo},0a,800d,35y,0h,0t,0r" target="_blank" rel="noopener">Google Earth</a></span></div>`:''}${it.x!=null?`<button class="btn" data-fly="${it.x},${it.y}" style="width:100%;margin-top:10px">Lihat di peta</button>`:''}<form method="dialog" style="grid-template-columns:1fr"><button>Tutup</button></form>`;dlg.showModal()}
-function go(it){if(dlg.open)dlg.close();if(it.k==='bendung')pick(it.ref);else if(it.k==='petak')pinfo(it.ref);else idet(it)}
-function gsearch(){const q=$('#gq').value.trim().toLowerCase(),t=$('#gt').value,gr=$('#gr');if(!q&&!t){gr.innerHTML='';return}
- GS=idx().filter(x=>(!t||x.k===t)&&(!q||(x.n+' '+(x.nom||'')+' '+x.di+' '+TY[x.k]+' wilayah '+x.w+' '+wl(x.w)).toLowerCase().includes(q)));
- gr.innerHTML=GS.length?`<div class="res">${GS.slice(0,30).map((x,i)=>`<button data-g="${i}"><span>${esc(x.n)}</span><small>${TY[x.k]}${x.nom?' ('+esc(x.nom)+')':''}, ${esc(x.di||'-')}${x.w?', '+esc(wl(x.w)):''}</small></button>`).join('')}</div><div class="note">${GS.length} hasil${GS.length>30?', tampil 30 pertama':''}</div>`:'<div class="note">Tidak ada hasil. Coba kata lain atau pilih Semua jenis.</div>'}
-$('#gt').innerHTML='<option value="">Semua jenis</option>'+Object.keys(TY).map(k=>`<option value="${k}">${TY[k]}</option>`).join('');
-$('#gq').oninput=gsearch;$('#gt').onchange=gsearch;
-$('#gr').addEventListener('click',e=>{const g=e.target.closest('[data-g]');if(g)go(GS[g.dataset.g])});
-dlg.addEventListener('click',e=>{const g=e.target.closest('[data-g]');if(g)go(GD[g.dataset.g])});
-function wilRender(){const ds=[...new Set(PT.map(p=>p.di))];if(!ds.length){$('#wil').innerHTML='<p class="note">Belum ada data wilayah. Impor peta KMZ atau laporan Excel lebih dulu.</p>';return}
- $('#wil').innerHTML=ds.map(d=>{const rows=[...new Set([...PT.map((p,i)=>p.di===d?WP[i]:-1),...JR.map(j=>j.di===d?j.w:-1),...D.bn.map(b=>b.di===d?(WB[b.id]||0):-1)])].filter(w=>w>=0).sort((a,b)=>a-b).map(w=>{const ps=PT.filter((p,i)=>p.di===d&&WP[i]===w),tl=ps.reduce((a,p)=>a+lpr(p),0),tq=ps.reduce((a,p)=>a+p.q,0),kb=tl*KP.fpr,k=kb?tq/kb:0,s=KS(k),it=JR.filter(j=>j.di===d&&j.w===w).length,pl=JR.filter(j=>j.di===d&&j.w===w&&/^s/.test(j.k)).reduce((a,j)=>a+(j.pj||0),0),bn=D.bn.filter(b=>b.di===d&&WB[b.id]===w).length;
-  return`<tr data-d="${esc(d)}" data-w="${w}" tabindex="0"><td>${esc(wl(w))}</td><td class="num">${bn}</td><td class="num">${ps.length}</td><td class="num">${it}</td><td class="num">${fm(pl)}</td><td class="num">${fmt(Math.round(ps.reduce((a,p)=>a+p.lb,0)*100)/100)}</td><td class="num">${tl.toFixed(1)}</td><td class="num">${kb?k.toFixed(2):'-'}</td><td>${kb?`<span class="badge" style="background:${s[1]}">${s[0]}</span>`:'Belum ada data tanam'}</td></tr>`}).join('');
-  return`<div class="card" style="margin-bottom:14px"><h2>${esc(d)}</h2><div class="scroll"><table style="min-width:640px"><thead><tr><th>Wilayah</th><th class="num">Bendung</th><th class="num">Petak tersier</th><th class="num">Bangunan dan saluran</th><th class="num">Panjang saluran</th><th class="num">Luas baku (ha)</th><th class="num">LPR</th><th class="num">K</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div></div>`}).join('')+'<p class="note">Pilih satu wilayah untuk melihat semua isinya. Pembagian wilayah ini contoh; sesuaikan dengan wilayah kerja UPTD.</p>'}
-function wdet(d,w){const L=idx().filter(x=>x.di===d&&x.w===w);GD=L;
- dlg.innerHTML=`<h2>${esc(d)}, ${esc(wl(w))}</h2>`+Object.keys(TY).map(k=>{const a=L.map((x,i)=>[x,i]).filter(([x])=>x.k===k);return a.length?`<div class="kv"><span>${TY[k]} (${a.length})</span><span></span></div><div style="padding:4px 0 8px">${a.map(([x,i])=>`<button class="lk" style="display:block" data-g="${i}">${esc(x.n)}</button>`).join('')}</div>`:''}).join('')+'<form method="dialog" style="grid-template-columns:1fr;margin-top:10px"><button>Tutup</button></form>';dlg.showModal()}
-$('#wil').addEventListener('click',e=>{const tr=e.target.closest('tr[data-d]');if(tr)wdet(tr.dataset.d,+tr.dataset.w)});
-function lrender(){
- $('#kf').innerHTML=Object.keys(KP).map(k=>`<label>${KL[k]}<input class="ni" style="width:100%" type="number" min="0" step="any" data-p="${k}" value="${KP[k]}"></label>`).join('');
- $('#fdi').innerHTML='<option value="">Semua daerah irigasi</option>'+[...new Set(PT.map(p=>p.di))].map(d=>`<option>${esc(d)}</option>`).join('');
- $('#lb').innerHTML=PT.map((p,i)=>`<tr data-i="${i}" style="cursor:pointer"><td><button class="lk" aria-label="Buka detail petak ${esc(p.n)}">${esc(p.n)}</button></td><td>${esc(p.di)}</td><td>${esc(p.sal)}</td><td class="num">${p.lb}</td>`+['sem','olah','tumb','pal','tm','tt','q'].map(k=>`<td><input class="ni" type="number" min="0" step="any" data-k="${k}" value="${p[k]}" aria-label="${k} ${esc(p.n)}"></td>`).join('')+'<td class="num o"></td>'.repeat(5)+'</tr>').join('');
- document.querySelectorAll('#lb tr').forEach(calc);lsum()}
-const BK=()=>({app:'irigasi',versi:1,dibuat:new Date().toISOString(),D,C,PT,WP,WB,JR,KP,S,CT,INFO,GEO,LOC,JT});
-$('#bk').onclick=async()=>{const dl=window.claude&&claude.use?await claude.use('downloads'):null;
- if(!dl){try{const u=URL.createObjectURL(new Blob([JSON.stringify(BK(),null,1)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download=`cadangan-irigasi-${iso(new Date())}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);say('Cadangan diunduh.')}catch(e){say('Cadangan gagal diunduh.',1)}return}
- try{await dl.save({filename:`cadangan-irigasi-${iso(new Date())}.json`,data:JSON.stringify(BK(),null,1)});say('Cadangan siap disimpan.')}
- catch(e){say(e&&e.code==='declined'?'Penyimpanan dibatalkan.':'Cadangan gagal disimpan.',1)}};
-$('#frs').onchange=async e=>{const f=e.target.files[0];if(!f)return;
- try{const b=JSON.parse(await f.text());if(b.app!=='irigasi'||!b.D||!Array.isArray(b.D.bn)||!Array.isArray(b.PT)||!Array.isArray(b.WP)||!Array.isArray(b.JR))throw 0;
-  const nm=['lb','sem','olah','tumb','pal','tm','tt','q'],xy=l=>(l||[]).map(q=>[+q[0]||0,+q[1]||0]);
-  const pt=b.PT.map(p=>{const o={n:String(p.n),di:String(p.di),sal:String(p.sal)};nm.forEach(k=>o[k]=+p[k]||0);o.nom=String(p.nom||'');o.ds=Array.isArray(p.ds)?p.ds.map(x=>[String(x[0]).slice(0,80),+x[1]||0]):[];if(p.lo!=null){o.lo=+p.lo;o.la=+p.la}return o});
-  b.D.bn.forEach(o=>{o.id=String(o.id);o.nama=String(o.nama);o.di=String(o.di||'');o.x=+o.x||0;o.y=+o.y||0;o.keb=+o.keb||0;o.np=o.np?1:0;o.lo=o.lo==null?null:+o.lo;o.la=o.la==null?null:+o.la;o.sid=String(o.sid||'');o.debit=(o.debit||[]).map(d=>({t:String(d.t).slice(0,10),v:+d.v||0}))});
-  b.D.di=(b.D.di||[]).map(d=>({nama:String(d.nama),luas:String(d.luas||'-'),pts:xy(d.pts),raw:xy(d.raw),nolabel:d.nolabel?1:0}));b.D.sal=(b.D.sal||[]).map(xy);b.D.salk=(b.D.salk||[]).map(String);b.D.saln=(b.D.saln||[]).map(String);b.D.salu=(b.D.salu||[]).map(String);b.D.salr=(b.D.salr||[]).map(xy);b.D.proj=b.D.proj&&isFinite(+b.D.proj.k)?{x0:+b.D.proj.x0,y1:+b.D.proj.y1,k:+b.D.proj.k}:null;
-  const cr=(b.C||[]).map(r=>({di:String(r.di),m:String(r.m),padi:+r.padi||0,jagung:+r.jagung||0,pal:+r.pal||0,teb:+r.teb||0,lain:+r.lain||0}));
-  Object.keys(KP).forEach(k=>{const v=(b.KP||{})[k];if(typeof v==='number')KP[k]=v});
-  PT.length=0;PT.push(...pt);WP.length=0;WP.push(...b.WP.map(Number));Object.keys(WB).forEach(k=>delete WB[k]);Object.entries(b.WB||{}).forEach(([k,v])=>WB[k]=+v||0);
-  JR.length=0;JR.push(...b.JR.map(j=>({k:TY[j.k]?j.k:'st',n:String(j.n),di:String(j.di),w:+j.w||0,ind:String(j.ind||''),pj:j.pj==null?null:+j.pj||0,kd:String(j.kd||'-'),nom:str(j.nom),q:j.q==null?null:+j.q||0,ls:j.ls==null?null:+j.ls||0,th:str(j.th),src:j.src==='xl'?'xl':(j.src?1:0),...(j.x!=null&&j.y!=null?{x:+j.x||0,y:+j.y||0}:{}),...(j.lo!=null?{lo:+j.lo,la:+j.la}:{}),id:String(j.id||''),hu:String(j.hu||''),hl:String(j.hl||''),pn:+j.pn||0,av:j.av==null?null:+j.av||0})));
-  S=b.S&&typeof b.S==='object'?b.S:{};CT=b.CT&&typeof b.CT==='object'?b.CT:{};JT=b.JT&&typeof b.JT==='object'?Object.fromEntries(Object.entries(b.JT).filter(([k,v])=>JTL[v]).map(([k,v])=>[String(k),v])):{};if(b.INFO&&typeof b.INFO==='object'){INFO=b.INFO;saveInfo();applyInfo()}
-  GEO={desa:((b.GEO||{}).desa||[]).map(g=>({n:String(g.n),k:String(g.k||''),pts:xy(g.pts)})),kec:((b.GEO||{}).kec||[]).map(g=>({n:String(g.n),k:'',pts:xy(g.pts)}))};
-  LOC=b.LOC&&typeof b.LOC==='object'?Object.fromEntries(Object.entries(b.LOC).map(([k,v])=>[String(k),{d:String((v||{}).d||''),k:String((v||{}).k||'')}])):{};
-  try{localStorage.setItem('pi_debit',JSON.stringify(S));localStorage.setItem('pi_cat',JSON.stringify(CT))}catch(x){}
-  init(b.D,cr);lrender();$('#gr').innerHTML='';say(`Cadangan dipulihkan: ${PT.length} petak tersier, ${b.D.bn.length} bendung.`)}
- catch(x){say('File cadangan tidak valid. Gunakan file JSON dari tombol Unduh cadangan.',1)}e.target.value=''};
-const XT={petak:{l:'Petak tersier',f:[['n','Nama petak'],['di','Daerah irigasi'],['sal','Saluran'],['w','Wilayah (angka)'],['lb','Luas baku (ha)'],['sem','Semai (ha)'],['olah','Olah lahan (ha)'],['tumb','Padi tumbuh (ha)'],['pal','Palawija (ha)'],['tm','Tebu muda (ha)'],['tt','Tebu tua (ha)'],['q','Debit terukur (lt/dt)']]},bendung:{l:'Bendung',f:[['n','Nama bendung'],['di','Daerah irigasi'],['w','Wilayah (angka)'],['keb','Kebutuhan (lt/dt)'],['lat','Lintang (lat)'],['lng','Bujur (lng)']]},jar:{l:'Bangunan atau saluran',f:[['k','Jenis'],['n','Nama'],['di','Daerah irigasi'],['w','Wilayah (angka)'],['ind','Induk'],['pj','Panjang (m)'],['kd','Kondisi']]},tan:{l:'Laporan tanaman',f:[['di','Daerah irigasi'],['m','Musim tanam'],['padi','Padi (ha)'],['jagung','Jagung (ha)'],['pal','Palawija (ha)'],['teb','Tebu (ha)'],['lain','Tanaman lain (ha)']]},deb:{l:'Debit bendung',f:[['n','Nama bendung'],['t','Tanggal'],['v','Debit (lt/dt)']]}};
-const GX={n:/nama|name|petak|bendung|dam/i,di:/(^|[^a-z])di([^a-z]|$)|daerah|irigasi/i,sal:/saluran|sekunder/i,w:/wilayah|wil|region|zona/i,lb:/baku|^luas$|area/i,sem:/semai|bibit/i,olah:/olah/i,tumb:/tumbuh|padi/i,pal:/palawija|pal/i,tm:/tebu.*muda/i,tt:/tebu.*tua/i,q:/debit|terukur|^q$/i,keb:/kebutuhan|keb/i,lat:/^lat|lintang/i,lng:/^lng|^lon|bujur/i,k:/jenis|tipe|type|kategori/i,ind:/induk|parent/i,pj:/panjang|length/i,kd:/kondisi|condition|status/i,m:/musim|season|mt/i,padi:/padi/i,jagung:/jagung/i,teb:/tebu/i,lain:/lain|kedelai|kacang|sayur|tembakau/i,t:/tanggal|tgl|date|waktu/i,v:/debit|nilai|value|^q$/i};
-let XL=[],XR=[],XK=[];
-const flat=(o,p='',out={})=>{Object.entries(o||{}).forEach(([k,v])=>{if(v&&typeof v==='object'&&!Array.isArray(v))flat(v,p+k+'.',out);else out[p+k]=v});return out};
-const lists=(o,p,out,d)=>{if(Array.isArray(o)){if(o.length&&o[0]&&typeof o[0]==='object'&&!Array.isArray(o[0]))out.push([p||'(utama)',o])}else if(o&&typeof o==='object'&&d<3)Object.entries(o).forEach(([k,v])=>lists(v,p?p+'.'+k:k,out,d+1))};
-const num=v=>{const n=parseFloat(String(v==null?'':v).replace(',','.'));return isFinite(n)?n:0};
-const str=v=>v==null?'':String(v).slice(0,120);
-const dt=v=>{if(typeof v==='number'&&v>20000&&v<80000)return new Date(Date.UTC(1899,11,30)+Math.floor(v)*864e5).toISOString().slice(0,10);const s=str(v),m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);return m?`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`:s.slice(0,10)};
-const tyOf=s=>{s=s.toLowerCase();return /bagi/.test(s)&&/sadap/.test(s)?'bbs':/sadap/.test(s)?'bs':/ukur/.test(s)?'bu':/primer/.test(s)?'sp':/sekunder/.test(s)?'ss':/tersier/.test(s)?'st':/kuarter|kwarter/.test(s)?'sk':''};
-const mp=()=>Object.fromEntries([...document.querySelectorAll('#xmap select')].map(s=>[s.dataset.f,s.value]));
-function xprev(){const t=$('#xt').value,m=mp(),F=XT[t].f;
- $('#xpv').innerHTML=`<table style="min-width:0"><thead><tr>${F.map(([f,l])=>`<th>${l}</th>`).join('')}</tr></thead><tbody>${XR.slice(0,3).map(r=>`<tr style="cursor:default">${F.map(([f])=>`<td>${m[f]?esc(str(r[m[f]])):'-'}</td>`).join('')}</tr>`).join('')}</tbody></table><p class="note">Pratinjau 3 baris pertama dari ${XR.length} baris.</p>`}
-function xrender(){const t=$('#xt').value;
- const us=new Set();$('#xmap').innerHTML=XT[t].f.map(([f,l])=>{const gk=XK.find(k=>!us.has(k)&&GX[f].test(k.split('.').pop()))||'';us.add(gk);return`<label>${l}<select data-f="${f}"><option value="">(kosong)</option>${XK.map(k=>`<option value="${esc(k)}"${k===gk?' selected':''}>${esc(k)}</option>`).join('')}</select></label>`}).join('');xprev()}
-function xsel(i){XR=XL[i][1].slice(0,5000).map(r=>flat(r));XK=[...new Set(XR.slice(0,50).flatMap(Object.keys))];const p=XL[i][0].toLowerCase();
- const g=/debit/.test(p)?'deb':/petak/.test(p)?'petak':/bendung|dam/.test(p)?'bendung':/tanam|crop/.test(p)?'tan':/saluran|bangunan|jaringan/.test(p)?'jar':'';if(g)$('#xt').value=g;xrender()}
-$('#fx').onchange=async e=>{const f=e.target.files[0];if(!f)return;
- try{if(/\.(xlsx|xlsm|xls)$/i.test(f.name)){await xlOpen(f);e.target.value='';return}const j=JSON.parse(await f.text());$('#xa').hidden=true;if(isSv(j)){XJ=j;svSum();$('#xw').hidden=true;e.target.value='';return}XSH=[];$('#xhl').hidden=true;XL=[];lists(j,'',XL,0);if(!XL.length)throw 0;
-  $('#xs').innerHTML=XL.map((l,i)=>`<option value="${i}">${esc(l[0])} (${l[1].length} baris)</option>`).join('');
-  $('#xt').innerHTML=Object.keys(XT).map(k=>`<option value="${k}">${XT[k].l}</option>`).join('');$('#xw').hidden=false;xsel(0);say(`${XL.length} bagian data ditemukan. Pilih bagian dan jenisnya, lalu cocokkan kolom.`)}
- catch(x){$('#xw').hidden=true;say('File tidak terbaca atau tidak berisi daftar data. Pastikan formatnya JSON.',1)}e.target.value=''};
-$('#xs').onchange=()=>XSH.length&&!XL.length?xlSheet(+$('#xs').value):xsel(+$('#xs').value);$('#xt').onchange=xrender;$('#xmap').addEventListener('change',xprev);
-let XJ=null;
-const isSv=j=>!!(j&&Array.isArray(j.bangunan)&&Array.isArray(j.saluran)&&j.bangunan.length&&j.bangunan[0].k_aset!==undefined);
-const SB={B01:'bendung',F41:'petak',P01:'bg',P02:'bbs',P03:'bs',P21:'bt',P22:'bt',C01:'bu',C03:'gg',C06:'jb',C07:'tj',C08:'pl',C09:'tc',C10:'mh'},SS={S01:'sp',S02:'ss',S11:'sb',S15:'st',S16:'sk'};
-function svSum(){const b=XJ.bangunan,c=k=>b.filter(x=>x.k_aset===k).length,id=((XJ.iksiBangunan||XJ.iksiSaluran||[])[0]||{}).id_di;
- $('#xdi').value=INFO.di||(id?String(id):'Daerah Irigasi');
- $('#xinfo').textContent=`Terdeteksi format aplikasi survei aset irigasi: ${b.length} bangunan (${c('B01')} bendung, ${c('F41')} petak tersier, ${c('P01')+c('P02')+c('P03')} bangunan bagi dan sadap, ${c('C01')} pengukur debit) dan ${XJ.saluran.length} saluran. Data survei IKSI dan lining belum dibaca.`;$('#xa').hidden=false}
-function svImport(){
- const di=str($('#xdi').value)||'Daerah Irigasi',gj=r=>{try{return JSON.parse(r.p)}catch(e){return null}},dm=r=>{try{return JSON.parse(r.dimensi)||{}}catch(e){return{}}};
- const all2=[...XJ.bangunan,...XJ.saluran],rows=all2.map(r=>({r,g:gj(r)})),co=[],walk=a=>typeof a[0]==='number'?co.push(a):a.forEach(walk);
- rows.forEach(o=>{if(o.g&&Array.isArray(o.g.coordinates))walk(o.g.coordinates)});
- if(!co.length)return say('Koordinat tidak ditemukan di file.',1);
- const xs=co.map(c=>c[0]),ys=co.map(c=>c[1]),x0=Math.min(...xs),y1=Math.max(...ys),k=Math.min(560/((Math.max(...xs)-x0)||1),380/((y1-Math.min(...ys))||1)),P=c=>[+(20+(c[0]-x0)*k).toFixed(1),+(20+(y1-c[1])*k).toFixed(1)];
- const pos=g=>{if(!g||!g.coordinates)return{};if(g.type==='Point'){const p=P(g.coordinates);return{x:p[0],y:p[1],lo:g.coordinates[0],la:g.coordinates[1]}}if(g.type==='Polygon'&&Array.isArray(g.coordinates[0])){const r=g.coordinates[0].map(P);return{x:+(r.reduce((s,c)=>s+c[0],0)/r.length).toFixed(1),y:+(r.reduce((s,c)=>s+c[1],0)/r.length).toFixed(1),lo:g.coordinates[0].reduce((s,c)=>s+c[0],0)/g.coordinates[0].length,la:g.coordinates[0].reduce((s,c)=>s+c[1],0)/g.coordinates[0].length}}return{}};
- const nd={bn:[],di:[],sal:[],salk:[],saln:[],salr:[],salu:[],proj:{x0,y1,k}},nameBy={};all2.forEach(r=>nameBy[r.sync_id]=str(r.nama)||str(r.nomenklatur));
- PT.length=0;WP.length=0;JR.length=0;Object.keys(WB).forEach(x=>delete WB[x]);
- let nb=0,np=0,nj=0,sk=0;
- rows.forEach(({r,g})=>{const nm=str(r.nama)||str(r.nomenklatur)||`${r.n_aset} ${r.norec}`,d=dm(r),t=SB[r.k_aset],s=SS[r.k_aset],nom=str(r.nomenklatur),extra={q:d.Q==null||d.Q===''?null:num(d.Q),ls:d.LUAS_LAYANAN==null||d.LUAS_LAYANAN===''?null:num(d.LUAS_LAYANAN),th:str(d.TAHUN_DIBANGUN),src:1,id:String(r.sync_id||'')};
-  if(s){if(g&&Array.isArray(g.coordinates)){nd.sal.push(g.coordinates.map(P));nd.salk.push(s);nd.saln.push(nm);nd.salr.push(g.coordinates);nd.salu.push(String(r.sync_id||''))}JR.push({k:s,n:nm,nom,di,w:0,ind:nameBy[r.norec_hulu_sync]||'',pj:d.PANJANG==null||d.PANJANG===''?null:Math.round(num(d.PANJANG)),kd:'-',hu:String(r.norec_hulu_sync||''),hl:String(r.norec_hilir_sync||''),pn:num(d.PINTU_JUMLAH)||0,...extra});nj++;return}
-  if(t==='bendung'&&g&&g.type==='Point'){const p=P(g.coordinates);nd.bn.push({id:'S'+r.norec,sid:String(r.sync_id||''),nama:nm,di,x:p[0],y:p[1],lo:g.coordinates[0],la:g.coordinates[1],keb:0,debit:[]});nb++;return}
-  if(t==='petak'){PT.push({n:nm,di,nom,sal:'-',lb:num(d.LUAS),sem:0,olah:0,tumb:0,pal:0,tm:0,tt:0,q:0,lo:pos(g).lo,la:pos(g).la});WP.push(0);if(g&&g.type==='Polygon'&&Array.isArray(g.coordinates[0]))nd.di.push({nama:nm,luas:(num(d.LUAS)||'-')+' ha',pts:g.coordinates[0].map(P),raw:g.coordinates[0],nolabel:1});np++;return}
-  if(t){JR.push({k:t,n:nm,nom,di,w:0,ind:'',pj:null,kd:'-',...pos(g),...extra});nj++;return}
-  if(/^[CF]/.test(r.k_aset)){JR.push({k:'bl',n:nm,nom:str(r.n_aset)+(nom?', '+nom:''),di,w:0,ind:'',pj:null,kd:'-',...pos(g),...extra});nj++;return}
-  sk++});
- C=[];init(nd,[]);lrender();$('#gr').innerHTML='';$('#gq').value='';
- say(`Impor selesai: ${nb} bendung, ${np} petak tersier, ${nj} bangunan dan saluran, ${nd.sal.length} garis saluran di peta. ${sk} titik ujung atau pangkal saluran tanpa bangunan dilewati.`)}
-$('#xsv').onclick=svImport;
-function ringRender(){
- const bn=D.bn,S4=['Cukup','Waspada','Kritis','Belum ada data'],cl={'Cukup':'var(--water)','Waspada':'var(--warn)','Kritis':'var(--crit)','Belum ada data':'var(--mut)'};
- const cnt=Object.fromEntries(S4.map(k=>[k,bn.filter(b=>stat(b)[0]===k).length])),n=bn.length||1;
- const pj=JR.filter(j=>/^s/.test(j.k)).reduce((a,j)=>a+(j.pj||0),0),lb=PT.reduce((a,p)=>a+p.lb,0);
- const att=bn.filter(b=>['Waspada','Kritis'].includes(stat(b)[0])).sort((a,b)=>last(a).v/a.keb-last(b).v/b.keb).slice(0,6);
- const st=(t,d,g)=>`<button class="row" data-go="${g}"><span><b>${t}</b><br><small style="color:var(--mut)">${d}</small></span><span>›</span></button>`;
- $('#ring').innerHTML=`${!bn.length&&!PT.length&&!JR.length?'<div class="card" style="margin-bottom:14px"><h2>Selamat datang</h2><p class="note">Belum ada data. Mulailah dengan mengisi info dasar dan memasukkan peta (KMZ) di Setelan, lalu laporan Excel di Data.</p><button class="row" data-go="set"><span><b>1. Setelan</b><br><small style="color:var(--mut)">Info dasar dan peta dari KMZ</small></span><span>›</span></button><button class="row" data-go="impor"><span><b>2. Data</b><br><small style="color:var(--mut)">Laporan Excel, cadangan JSON, atau data contoh</small></span><span>›</span></button></div>':''}<div class="kpis"><div class="card kpi"><div class="lab">Bendung</div><div class="val">${bn.length}</div><div class="sub">${bn.filter(b=>last(b)).length} sudah punya data debit</div></div><div class="card kpi"><div class="lab">Petak tersier</div><div class="val">${PT.length}</div><div class="sub">${fmt(Math.round(lb*100)/100)} ha luas baku</div></div><div class="card kpi"><div class="lab">Bangunan dan saluran</div><div class="val">${JR.length}</div><div class="sub">Panjang saluran ${fm(pj)}</div></div></div>
-<div class="grid"><div class="card"><h2>Kondisi air bendung</h2><div class="seg" role="img" aria-label="Komposisi status bendung">${S4.map(k=>`<i style="width:${cnt[k]/n*100}%;background:${cl[k]}"></i>`).join('')}</div><div class="leg">${S4.map(k=>`<span><i class="dot" style="background:${cl[k]}"></i>${k}: <b>${cnt[k]}</b></span>`).join('')}</div>
-<h2 style="margin-top:20px">Perlu perhatian</h2>${att.length?att.map(b=>{const s=stat(b),l=last(b);return`<button class="row" data-id="${esc(b.id)}"><span><b>${esc(b.nama)}</b><br><small style="color:var(--mut)">${l.v} dari kebutuhan ${b.keb} lt/dt</small></span><span class="badge" style="background:${s[1]}">${s[0]}</span></button>`}).join(''):`<p class="note">${bn.some(b=>last(b)&&b.keb)?'Semua bendung yang punya data debit dalam kondisi cukup.':'Belum ada data debit dan kebutuhan air. Catat debit lewat tab Peta.'}</p>`}</div>
-<div class="card"><h2>Mulai dari sini</h2>${st('1. Lihat peta','Klik bendung untuk melihat dan mencatat debit','peta')}${st('2. Cari apa saja','Bendung, petak, bangunan, atau saluran','cari')}${st('3. Hitung LPR dan FPR','Cek kecukupan air tiap petak tersier','lpr')}${st('4. Masukkan atau cadangkan data','Impor dari aplikasi lain, simpan JSON','impor')}</div></div>`}
-$('#ring').addEventListener('click',e=>{const a=e.target.closest('[data-id]'),g=e.target.closest('[data-go]');if(a)pick(a.dataset.id);else if(g){const t=g.dataset.go;if(t==='cari'){window.scrollTo(0,0);$('#gq').focus()}else show(t)}});
-setTimeout(ringRender,0);
-let INFO={},WN=[],KG=[];
-try{INFO=JSON.parse(localStorage.getItem('pi_info')||'{}')}catch(e){INFO={}}
-const wl=w=>w?(WN[w-1]||'Wilayah '+w):'Belum dibagi',FI=['unit','kab','di','lb','sumber','ptg','wil','kec'];
-const saveInfo=()=>{try{localStorage.setItem('pi_info',JSON.stringify(INFO))}catch(e){}};
-const note2=(id,t,bad)=>{const e=$(id);e.textContent=t;e.style.color=bad?'var(--crit)':'var(--water)'};
-function applyInfo(){if(!INFO||typeof INFO!=='object')INFO={};FI.forEach(k=>INFO[k]=String(INFO[k]==null?'':INFO[k]).slice(0,k==='wil'?600:k==='kec'?20000:120));
- WN=INFO.wil.split(/\n+/).map(s=>s.trim()).filter(Boolean).slice(0,12);
- KECM={};INFO.kec.split(/\n+/).forEach(l=>{const a=l.split(/[,;\t]/).map(s=>s.trim());if(a[0]&&a[1])KECM[a[0].toLowerCase()]=a[1].replace(/^kec(amatan|\.)?\s*/i,'')});
- const f=$('#fi').elements;FI.forEach(k=>f[k].value=INFO[k]);
- const c=[];if(INFO.di)c.push(['accent',INFO.di]);if(INFO.unit)c.push(['',INFO.unit]);if(INFO.kab)c.push(['',INFO.kab]);if(INFO.lb)c.push(['',fmt(+INFO.lb||0)+' ha luas baku']);if(INFO.sumber)c.push(['','Sumber air: '+INFO.sumber]);if(INFO.ptg)c.push(['','Petugas: '+INFO.ptg]);
- $('#prof').innerHTML=c.map(([a,t])=>`<span class="chip ${a}">${esc(t)}</span>`).join('')}
-$('#fi').addEventListener('submit',e=>{e.preventDefault();FI.forEach(k=>INFO[k]=e.target.elements[k].value);saveInfo();applyInfo();note2('#imsg','Info dasar tersimpan di perangkat ini dan ikut masuk cadangan JSON.')});
-applyInfo();
-const KT=[['','Abaikan'],['di','Daerah irigasi (poligon)'],['petak','Petak tersier (poligon)'],['sp','Saluran primer (garis)'],['ss','Saluran sekunder (garis)'],['st','Saluran tersier (garis)'],['sk','Saluran kuarter (garis)'],['sb','Saluran pembuang (garis)'],['bendung','Bendung (titik)'],['bs','Bangunan sadap (titik)'],['bbs','Bangunan bagi sadap (titik)'],['bg','Bangunan bagi (titik)'],['bu','Bangunan ukur (titik)'],['bt','Box tersier atau kuarter (titik)'],['gg','Gorong-gorong (titik)'],['tj','Terjunan (titik)'],['pl','Pelimpah samping (titik)'],['jb','Jembatan (titik)'],['tc','Tangga cuci (titik)'],['mh','Tempat mandi hewan (titik)'],['bl','Bangunan lain (titik)'],['desa','Batas desa (poligon)'],['kec','Batas kecamatan (poligon)']],KLAB=Object.fromEntries(KT);
-const kid=(n,t)=>[...n.children].find(c=>c.localName===t);
-const kc=s=>(s||'').trim().split(/\s+/).map(t=>t.split(',').map(Number)).filter(a=>a.length>=2&&isFinite(a[0])&&isFinite(a[1])).map(a=>[a[0],a[1]]);
-const kco=e=>{const q=e&&e.getElementsByTagName('coordinates')[0];return kc(q&&q.textContent)};
-const mm=a=>{const la=a.reduce((s,c)=>s+c[1],0)/a.length;return[111320*Math.cos(la*Math.PI/180),110540]};
-const klen=a=>{const[mx,my]=mm(a);let s=0;for(let i=1;i<a.length;i++)s+=Math.hypot((a[i][0]-a[i-1][0])*mx,(a[i][1]-a[i-1][1])*my);return s};
-const karea=a=>{const[mx,my]=mm(a),o=a[0];let s=0;for(let i=0;i<a.length;i++){const p=a[i],q=a[(i+1)%a.length];s+=(p[0]-o[0])*mx*(q[1]-o[1])*my-(q[0]-o[0])*mx*(p[1]-o[1])*my}return Math.abs(s)/2/10000};
-function kparse(txt){const x=new DOMParser().parseFromString(txt,'text/xml');if(x.getElementsByTagName('parsererror').length)throw 0;const out=[];
- const stl=s=>{const h=s.getElementsByTagName('href')[0],lc=s.getElementsByTagName('LineStyle')[0],c=lc&&lc.getElementsByTagName('color')[0];return{ic:h?h.textContent.trim().split('/').pop().toLowerCase():'',lc:c?c.textContent.trim().toLowerCase():''}};
- const SY={},SM={};[...x.getElementsByTagName('Style')].forEach(s=>{const id=s.getAttribute('id');if(id)SY[id]=stl(s)});
- [...x.getElementsByTagName('StyleMap')].forEach(m=>{const id=m.getAttribute('id');[...m.getElementsByTagName('Pair')].forEach(p=>{const k=p.getElementsByTagName('key')[0],u=p.getElementsByTagName('styleUrl')[0];if(k&&u&&k.textContent.trim()==='normal')SM[id]=u.textContent.trim().replace('#','')})});
- const sty=c=>{const ins=kid(c,'Style');if(ins)return stl(ins);const u=kid(c,'styleUrl');let id=u?u.textContent.trim().replace('#',''):'';id=SM[id]||id;return SY[id]||{ic:'',lc:''}};
- const walk=(n,p)=>[...n.children].forEach(c=>{const t=c.localName;
-  if(t==='Folder'||t==='Document'){const nm=kid(c,'name');walk(c,t==='Folder'&&nm?(p?p+' / ':'')+nm.textContent.trim():p)}
-  else if(t==='Placemark'){const g=[];
-   [...c.getElementsByTagName('Point')].forEach(e=>{const a=kco(e);if(a[0])g.push({t:'Point',c:a})});
-   [...c.getElementsByTagName('LineString')].forEach(e=>{const a=kco(e);if(a.length>1)g.push({t:'Line',c:a})});
-   [...c.getElementsByTagName('Polygon')].forEach(e=>{const a=kco(e.getElementsByTagName('outerBoundaryIs')[0]);if(a.length>2)g.push({t:'Poly',c:a})});
-   const ext={};[...c.getElementsByTagName('Data')].forEach(d=>{const v=kid(d,'value');ext[d.getAttribute('name')]=v?v.textContent:''});[...c.getElementsByTagName('SimpleData')].forEach(d=>ext[d.getAttribute('name')]=d.textContent);
-   const nm=kid(c,'name');out.push({p:p||'(tanpa folder)',p0:p||'',n:nm?nm.textContent.trim():'',g,ext,...sty(c)})}});
- walk(x.documentElement,'');return out}
-function kguess(p,c){const s=p.toLowerCase();return /kecamatan/.test(s)&&c.Poly?'kec':/desa|kelurahan/.test(s)&&c.Poly?'desa':/gorong/.test(s)?'gg':/terjun/.test(s)?'tj':/pelimpah/.test(s)?'pl':/jembatan/.test(s)?'jb':/cuci/.test(s)?'tc':/mandi/.test(s)?'mh':/bendung|\bdam\b|weir/.test(s)?'bendung':/petak/.test(s)?'petak':/pembuang|drain/.test(s)?'sb':/primer/.test(s)?'sp':/sekunder/.test(s)?'ss':/tersier/.test(s)&&c.Line?'st':/kuarter|kwarter/.test(s)?'sk':/bagi/.test(s)&&/sadap/.test(s)?'bbs':/sadap/.test(s)?'bs':/bagi/.test(s)?'bg':/ukur|debit|duga/.test(s)?'bu':/box/.test(s)?'bt':c.Poly?(c.Poly<=5?'di':'petak'):c.Line?'ss':c.Point?'bl':''}
-function kui(pms){const m=new Map();pms.forEach(r=>{if(!m.has(r.p))m.set(r.p,[]);m.get(r.p).push(r)});KG=[...m.entries()];
- const wo='<option value="0">Belum dibagi</option>'+WN.map((n,i)=>`<option value="${i+1}">${esc(n)}</option>`).join('');
- $('#kl').innerHTML=KG.map(([p,a],i)=>{const c={Point:0,Line:0,Poly:0};a.forEach(r=>r.g.forEach(g=>c[g.t]++));const gs=KDEF[p]!==undefined?KDEF[p]:kguess(p,c);
-  return`<div class="krow"><div><b>${esc(p)}</b><br><small style="color:var(--mut)">${a.length} penanda: ${c.Point} titik, ${c.Line} garis${c.Line?` (${fm(a.reduce((s,r)=>s+r.g.filter(g=>g.t==='Line').reduce((u,g)=>u+klen(g.c),0),0))})`:''}, ${c.Poly} poligon</small></div><label>Jadikan<select data-r="t" data-i="${i}">${KT.map(([v,l])=>`<option value="${v}"${v===gs?' selected':''}>${l}</option>`).join('')}</select></label><label>Wilayah<select data-r="w" data-i="${i}">${wo}</select></label></div>`}).join('');
- $('#kw').hidden=false}
-function bld(){const c={bs:'var(--paddy)',bbs:'var(--warn)',bg:'var(--warn)',bu:'#a78bfa',bt:'var(--mut)',bl:'var(--mut)'};let h='';
- JR.forEach((j,i)=>{if(j.x==null||!SYM2[j.k])return;h+=`<g class="lb" data-j="${i}" tabindex="0" role="button" aria-label="${esc(j.n)}" style="cursor:pointer"><g transform="translate(${j.x} ${j.y})"><g class="sz" fill="var(--surf)" stroke="var(--ink)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">${SYM2[j.k]}<title>${esc(TY[j.k])}: ${esc(j.n)}</title></g><g class="sz"><text class="bl" y="-10" text-anchor="middle" font-size="7" fill="var(--ink)" stroke="var(--bg)" stroke-width="2.5" paint-order="stroke">${esc(j.n)}</text></g></g></g>`});return h}
-$('#map').addEventListener('click',e=>{const g=e.target.closest('[data-j]');if(g)idet(JR[+g.dataset.j])});
-$('#map').addEventListener('keydown',e=>{const g=e.target.closest('[data-j]');if(g&&e.key==='Enter')idet(JR[+g.dataset.j])});
-let XSH=[];
-async function xlOpen(f){
- if(!window.XLSX)return say('Pembaca Excel belum termuat. Simpan sebagai CSV lalu pakai kolom CSV di atas.',1);
- let wb;try{wb=XLSX.read(await f.arrayBuffer(),{type:'array'})}catch(x){return say('File Excel tidak terbaca.',1)}
- XSH=wb.SheetNames.map(n=>({n,a:xrows(wb.Sheets[n])})).filter(s=>s.a.length>1);
- $('#xb').hidden=true;if(xbDetect(wb))return;if(!XSH.length)return say('Tidak ada lembar dengan data di file ini.',1);
- $('#xa').hidden=true;XL=[];$('#xs').innerHTML=XSH.map((s,i)=>`<option value="${i}">${esc(s.n)} (${s.a.length} baris)</option>`).join('');
- $('#xt').innerHTML=Object.keys(XT).map(k=>`<option value="${k}">${XT[k].l}</option>`).join('');
- $('#xhl').hidden=false;$('#xw').hidden=false;xlSheet(0);say(`${XSH.length} lembar Excel terbaca. Pilih lembar, baris judul, dan jenis data, lalu cocokkan kolom.`)}
-function xlSheet(i,h){const a=XSH[i].a;
- if(h==null){h=a.findIndex((r,ix)=>ix<15&&r.filter(c=>String(c).trim()!=='').length>=3&&r.filter(c=>typeof c==='string'&&c.trim()).length>=2);if(h<0)h=0;$('#xh').value=h+1;const sn=XSH[i].n.toLowerCase();$('#xt').value=/petak|lpr/.test(sn)?'petak':/debit/.test(sn)?'deb':'tan'}
- h=Math.min(h,a.length-1);
- const hd=a[h].map((c,ix)=>String(c).trim()||`Kolom ${ix+1}`).map((s,ix,ar)=>ar.indexOf(s)===ix?s:`${s} (${ix+1})`);
- XR=a.slice(h+1).map(r=>{const o={};hd.forEach((k,ix)=>o[k]=r[ix]===undefined?'':r[ix]);return o}).filter(o=>Object.values(o).some(v=>String(v).trim()!=='')).slice(0,5000);
- XK=hd;xrender()}
-$('#xh').onchange=()=>xlSheet(+$('#xs').value,Math.max(0,(+$('#xh').value||1)-1));
-$('#lyr').addEventListener('change',e=>{const l=e.target.dataset.l;if(l)$('#map').classList.toggle('no'+('l'+l),!e.target.checked)});
-let XB=null;
-function xrows(ws){const rg=XLSX.utils.decode_range(ws['!ref']||'A1');rg.s.c=0;rg.s.r=0;return XLSX.utils.sheet_to_json(ws,{header:1,defval:'',blankrows:true,range:rg})}
-const MON={januari:1,februari:2,maret:3,april:4,mei:5,juni:6,juli:7,agustus:8,september:9,oktober:10,november:11,desember:12};
-const cn=(r,i)=>typeof r[i]==='number'?r[i]:0,sm=(r,a)=>a.reduce((s,i)=>s+cn(r,i),0);
-const nrmP=s=>String(s).toLowerCase().replace(/petak|tersier|ters\.?/g,'').replace(/[^a-z0-9]/g,'');
-const nrmB=s=>String(s).toLowerCase().replace(/petak|tersier|ters\.?|bendung|bd\.?|saluran|primer|sekunder|sec\.?/g,'').replace(/[^a-z0-9]/g,'');
-const tc=s=>String(s).toLowerCase().replace(/(^|\s)(\S)/g,(m,a,b)=>a+b.toUpperCase());
-function rp05(a){const out=[],seen=new Set();let juru='',di='',last=null;
- a.forEach((r,i)=>{const b=String(r[1]).trim();
-  if(b==='JURU PENGAIRAN'){juru=String((a[i+2]||[])[1]||'').trim();return}
-  const m=b.match(/^DI\.?\s*(.+)/i);if(m){di=m[1].trim();return}
-  const dm=b.match(/^Ds\.?\s*(.+)/i);if(dm&&last){last.ds.push([dm[1].trim(),cn(r,2)]);return}
-  if(!b||/^(Primer|Sekunder|Sec\.|Ds\.|TERSIER|JURU|Jumlah|Total)/i.test(b)||typeof r[3]!=='number')return;
-  const k=nrmP(b)+'|'+di.toLowerCase();if(seen.has(k)){last=null;return}seen.add(k);
-  out.push(last={n:b,juru,di,ds:[],lb:cn(r,2),sem:sm(r,[3,6,9,12,15]),olah:sm(r,[4,7,10,13,16]),tumb:sm(r,[5,8,11,14,17]),tm:cn(r,18)+cn(r,19),tt:cn(r,20),pal:sm(r,[21,22,23])})});
- return out}
-function rp06(a){const pl=[],bd=[];let juru='',di='',cur=null;
- a.forEach((r,i)=>{const b=String(r[1]).trim(),c=String(r[2]).trim(),h=String(r[8]).trim();
-  if(b==='JURU PENGAIRAN'){juru=String((a[i+2]||[])[1]||'').trim();return}
-  if(b&&c&&!/^daerah irigasi$/i.test(b))di=b;
-  if(/^(bd\.|bendung)/i.test(c)){bd.push({n:c,di,juru});return}
-  if(h==='H->'&&c&&!/limpasan/i.test(c)){cur={juru,di,n:c,tipe:String(r[4]).trim(),lebar:r[5],kond:String(r[6]).trim(),baku:cn(r,7),keb:null,days:[],avg:null,done:false};pl.push(cur);return}
-  if(h==='Q->'&&cur&&!cur.done){cur.keb=typeof r[9]==='number'?r[9]:null;cur.days=r.slice(10,20);cur.avg=typeof r[21]==='number'?r[21]:null;cur.done=true}});
- return{pl,bd}}
-function xbDetect(wb){
- const f5=wb.SheetNames.find(n=>/^\s*5a/i.test(n)),f6=wb.SheetNames.find(n=>/^\s*0?6\b/.test(n));if(!f5&&!f6)return false;
- const arr=n=>xrows(wb.Sheets[n]),a5=f5?arr(f5):[],a6=f6?arr(f6):[];
- const tx=[...a5.slice(0,8),...a6.slice(0,8)].flat().map(String).join(' '),pm=tx.match(/(\d{1,2})\s*(?:s\/d|sd|-)\s*(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/),r6=rp06(a6);
- XB={pt:rp05(a5),pl:r6.pl,bd:r6.bd,per:pm?{d1:+pm[1],mo:MON[pm[3].toLowerCase()]||0,y:+pm[4],txt:`${pm[1]} sampai ${pm[2]} ${pm[3]} ${pm[4]}`}:null};
- const jr=new Set(XB.pt.map(p=>p.juru).filter(Boolean));
- $('#xa').hidden=true;$('#xw').hidden=true;$('#xhl').hidden=true;$('#xb').hidden=false;
- $('#xbinfo').textContent=`Terdeteksi laporan 10 harian: ${XB.pt.length} petak tersier, ${jr.size} juru pengairan, ${XB.pl.length} tempat pengukuran debit, ${XB.bd.length} bendung${XB.per?', periode '+XB.per.txt:''}.`;
- say('Format laporan 10 harian dikenali. Klik Impor laporan 10 harian.');return true}
-function xbImport(){const P=XB;if(!P)return;CDI=new Map(diNames().map(n=>[dkey(n),n]));
- if(D.sample){PT.length=0;WP.length=0;JR.length=0;Object.keys(WB).forEach(k=>delete WB[k]);D={bn:[],di:[],sal:[],salk:[],saln:[]};C=[]}
- const jur=[...new Set(P.pt.concat(P.pl).map(p=>p.juru).filter(Boolean))],jw=j=>jur.indexOf(j)+1;
- const dd=i=>P.per&&P.per.mo?new Date(Date.UTC(P.per.y,P.per.mo-1,P.per.d1+i)).toISOString().slice(0,10):iso(new Date());
- INFO.wil=jur.map(tc).join('\n');saveInfo();applyInfo();
- let nu=0,na=0,nq=0;
- P.pt.forEach(r=>{const k=nrmP(r.n),ex=PT.findIndex(p=>nrmP(p.n)===k),o={lb:r.lb,sem:r.sem,olah:r.olah,tumb:r.tumb,tm:r.tm,tt:r.tt,pal:r.pal};
-  if(ex>=0){Object.assign(PT[ex],o,{di:cdi(r.di),ds:r.ds});WP[ex]=jw(r.juru);nu++}else{PT.push({n:r.n,di:cdi(r.di),sal:'-',q:0,ds:r.ds,...o});WP.push(jw(r.juru));na++}});
- P.pl.forEach(pl=>{if(pl.avg==null)return;const k=nrmP(pl.n),i=PT.findIndex(p=>{const a=nrmP(p.n);return a===k||(a.length>=6&&k.startsWith(a)&&!/\d/.test(k[a.length]||''))});if(i>=0){PT[i].q=+pl.avg.toFixed(2);nq++}});
- for(let i=JR.length-1;i>=0;i--)if(JR[i].src==='xl')JR.splice(i,1);
- P.pl.forEach(pl=>JR.push({k:'bu',n:'Ukur '+pl.n,nom:`Tipe ${pl.tipe||'-'}, lebar ${pl.lebar===''||pl.lebar==null?'-':pl.lebar} m`,di:cdi(pl.di),w:jw(pl.juru),ind:'',pj:null,kd:pl.kond||'-',q:pl.keb==null?null:+pl.keb.toFixed(1),ls:pl.baku||null,th:'',av:pl.avg==null?null:+pl.avg.toFixed(1),src:'xl'}));
- let nb=0;
- P.bd.forEach(b=>{const k=nrmB(b.n),p0=P.pl.find(p=>p.di===b.di&&p.juru===b.juru&&p.keb!=null);let bb=k?D.bn.find(x=>nrmB(x.nama)===k):null;
-  if(!bb){bb={id:'X'+Date.now().toString(36)+nb,nama:b.n,di:cdi(b.di),x:0,y:0,keb:0,debit:[],np:1};D.bn.push(bb)}
-  WB[bb.id]=jw(b.juru);
-  if(p0){bb.keb=+(p0.keb||0).toFixed(1);p0.days.forEach((v,i)=>{if(typeof v==='number'){const t=dd(i);bb.debit=bb.debit.filter(e=>e.t!==t);bb.debit.push({t,v:+v.toFixed(2)})}});bb.debit.sort((a,c)=>a.t<c.t?-1:1)}
-  nb++});
- const g={};P.pt.forEach(r=>{const d=cdi(r.di),o=g[d]||(g[d]={di:d,padi:0,pal:0,teb:0});o.padi+=r.sem+r.olah+r.tumb;o.pal+=r.pal;o.teb+=r.tm+r.tt});
- const mu='Periode '+(P.per?P.per.txt:'laporan');C=C.filter(r=>!/^Periode /.test(r.m)).concat(Object.values(g).map(o=>({di:o.di,m:mu,padi:o.padi,jagung:0,pal:o.pal,teb:o.teb,lain:0})));
- init(D,C);lrender();$('#gr').innerHTML='';
- say(`Impor selesai: ${nu} petak diperbarui, ${na} petak baru, ${nq} petak mendapat debit terukur, ${nb} bendung, ${P.pl.length} tempat pengukuran. Wilayah mengikuti ${jur.length} juru pengairan.`)}
-$('#xbg').onclick=xbImport;
-let KMULTI=false;
-async function kread(f){let txt;
- if(/\.kmz$/i.test(f.name)){if(!window.JSZip)throw new Error('zip');const z=await JSZip.loadAsync(await f.arrayBuffer()),ks=Object.keys(z.files),n=ks.find(k=>/(^|\/)doc\.kml$/i.test(k))||ks.find(k=>/\.kml$/i.test(k));if(!n)return[];txt=await z.file(n).async('string')}else txt=await f.text();
- const nm=tc(f.name.replace(/\.(kmz|kml)$/i,'').replace(/[_]+/g,' ').replace(/^di[\s.-]+/i,'').trim());return kparse(txt).map(r=>(r.f=nm,r))}
-$('#fk').multiple=true;
-const kmzHandler=async e=>{const fs=[...e.target.files];if(!fs.length)return;let all=[],bad=0;
- for(const f of fs){try{all=all.concat(await kread(f))}catch(x){if(x&&x.message==='zip'){e.target.value='';return note2('#kmsg','Pembaca KMZ belum termuat. Simpan file sebagai KML di Google Earth, lalu coba lagi.',1)}bad++}}
- e.target.value='';
- if(!all.length){$('#kw').hidden=true;return note2('#kmsg','File tidak terbaca atau tidak berisi penanda (placemark).',1)}
- KMULTI=fs.length>1;if($('#ksm').checked)ksmartAll(all);else KDEF={};kui(all);note2('#kmsg',`${fs.length} file dibaca: ${all.length} penanda dari ${KG.length} folder${bad?`, ${bad} file gagal dibaca`:''}. ${KMULTI?'Nama file dipakai sebagai nama daerah irigasi. ':''}Tentukan setiap folder menjadi apa, lalu klik Impor.`)};
-(()=>{const a=$('#lyr').nextElementSibling,b=a.nextElementSibling;
- const ic=(k,l)=>`<span><svg class="sy" viewBox="-11 -11 22 22" fill="var(--surf)" stroke="var(--ink)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">${SYM2[k]}</svg>${l}</span>`;
- a.innerHTML='<span><svg class="sy" viewBox="-16 -12 32 30"><path d="M-15,-4H15M-15,4H15" stroke="var(--ink)" stroke-width="1.2" fill="none"/><path d="M0,-10V10" stroke="var(--water)" stroke-width="4.5" stroke-linecap="round"/><path d="M-5,-10L0,-6L5,-10" fill="none" stroke="var(--ink)" stroke-width="1.2"/><path d="M0,10V15M-2.2,12.8L0,15L2.2,12.8" fill="none" stroke="var(--ink)" stroke-width="1.2"/></svg>Bendung</span>'+[['bs','Bang. sadap'],['bg','Bang. bagi'],['bbs','Bang. bagi sadap'],['bt','Box tersier'],['bu','Alat ukur / BU'],['gg','Gorong-gorong'],['tj','Terjunan'],['pl','Pelimpah samping'],['jb','Jembatan'],['mh','Tempat mandi hewan'],['tc','Tangga cuci']].map(([k,l])=>ic(k,l)).join('');
- const ln=(w,d,l)=>`<span><svg class="sy" viewBox="0 0 28 8"><path d="M0 4H28" stroke="var(--ink)" stroke-width="${w}" stroke-linecap="round"${d?` stroke-dasharray="${d}"`:''}/></svg>${l}</span>`;
- b.innerHTML=ln(3,'','Sal. pembawa primer')+ln(2,'','Sekunder')+ln(1.3,'','Tersier')+ln(.8,'','Kuarter')+ln(1.4,'6 4','Sal. pembuang')+ln(1.6,'1 4','Batas daerah irigasi')+'<span><svg class="sy" viewBox="0 0 20 12"><rect width="20" height="12" fill="var(--paddy)" fill-opacity=".14"/><path d="M0,4H20M0,8H20M10,0V4M5,4V8M15,4V8" stroke="var(--ink)" stroke-opacity=".5" stroke-width=".7" fill="none"/></svg>Petak tersier (sawah)</span><span><svg class="sy" style="width:34px" viewBox="-22 -10 44 20"><rect x="-20" y="-9" width="40" height="18" fill="var(--surf)" stroke="var(--ink)" stroke-width=".8"/><path d="M-20,0H20M0,0V9" stroke="var(--ink)" stroke-width=".7"/></svg>Label petak: atas nama petak, bawah kiri luas baku (ha), bawah kanan luas tanam (ha)</span>'})();
-$('#fk').onchange=async e=>{const f=e.target.files[0];if(!f)return;
- try{let txt;if(/\.kmz$/i.test(f.name)){if(!window.JSZip)throw new Error('zip');const z=await JSZip.loadAsync(await f.arrayBuffer()),ks=Object.keys(z.files),n=ks.find(k=>/(^|\/)doc\.kml$/i.test(k))||ks.find(k=>/\.kml$/i.test(k));if(!n)throw 0;txt=await z.file(n).async('string')}else txt=await f.text();
-  const pms=kparse(txt);if(!pms.length)throw 0;kui(pms);note2('#kmsg',`${pms.length} penanda terbaca dari ${KG.length} folder. Tentukan setiap folder menjadi apa, lalu klik Impor.`)}
- catch(x){$('#kw').hidden=true;note2('#kmsg',x&&x.message==='zip'?'Pembaca KMZ belum termuat. Simpan file sebagai KML di Google Earth, lalu coba lagi.':'File tidak terbaca atau tidak berisi penanda (placemark).',1)}e.target.value=''};
-$('#kgo').onclick=()=>{
- const use=KG.map(([p,a],i)=>({a,t:$(`#kl [data-r="t"][data-i="${i}"]`).value,w:+$(`#kl [data-r="w"][data-i="${i}"]`).value||0})).filter(o=>o.t);
- if(!use.length)return note2('#kmsg','Pilih jenis untuk minimal satu folder.',1);
- if(use.every(o=>o.t==='desa'||o.t==='kec')){let n=0;const ev0=(r,re)=>{const q=Object.keys(r.ext).find(x=>re.test(x));return q?r.ext[q]:''};use.forEach(({a,t})=>a.forEach(r=>r.g.filter(g=>g.t==='Poly').forEach(g=>{GEO[t].push({n:str(r.n)||t,k:t==='desa'?str(ev0(r,/kec/i)):'',pts:g.c});n++})));return note2('#kmsg',`${n} batas desa atau kecamatan disimpan. Lokasi bangunan kini bisa ditentukan otomatis di tab Tanya.`)}
- const co=[];use.forEach(o=>{if(o.t==='desa'||o.t==='kec')return;o.a.forEach(r=>r.g.forEach(g=>g.c.forEach(c=>co.push(c))))});
- if(!co.length)return note2('#kmsg','Tidak ada koordinat pada folder yang dipilih.',1);
- const xs=co.map(c=>c[0]),ys=co.map(c=>c[1]),x0=Math.min(...xs),y1=Math.max(...ys),k=Math.min(560/((Math.max(...xs)-x0)||1),380/((y1-Math.min(...ys))||1)),P=c=>[+(20+(c[0]-x0)*k).toFixed(1),+(20+(y1-c[1])*k).toFixed(1)];
- const di0=str(INFO.di)||'Daerah Irigasi',nd={bn:[],di:[],sal:[],salk:[],saln:[],salr:[],salu:[],proj:{x0,y1,k}},cnt={};let sk=0,seq=0,ui=0;
- PT.length=0;WP.length=0;JR.length=0;Object.keys(WB).forEach(x=>delete WB[x]);
- const ev=(r,re)=>{const q=Object.keys(r.ext).find(x=>re.test(x));return q?r.ext[q]:undefined};
- use.forEach(({a,t,w})=>a.forEach(r=>{const di=KMULTI&&r.f?r.f:(r.f&&!INFO.di?r.f:di0),nm=str(r.n)||`${(KLAB[t]||'').replace(/ \(.*\)/,'')} ${++seq}`,pl=r.g.filter(g=>g.t==='Poly'),ln=r.g.filter(g=>g.t==='Line'),pt=r.g.filter(g=>g.t==='Point'),base={k:t,n:nm,nom:'',di,w,ind:'',pj:null,kd:'-',q:null,ls:null,th:'',src:1,id:'K'+Date.now().toString(36)+(++ui)};
-  if(t==='desa'||t==='kec'){if(!pl.length){sk++;return}pl.forEach(g=>GEO[t].push({n:nm,k:t==='desa'?str(ev(r,/kec/i)):'',pts:g.c}))}
-  else if(t==='di'){if(!pl.length){sk++;return}pl.forEach(g=>nd.di.push({nama:nm,luas:'-',pts:g.c.map(P),raw:g.c}))}
-  else if(t==='petak'){if(!pl.length){sk++;return}const lb=num(ev(r,/^luas/i))||+karea(pl[0].c).toFixed(2);PT.push({n:nm,di,sal:'-',lb,sem:0,olah:0,tumb:0,pal:0,tm:0,tt:0,q:0,lo:pl[0].c.reduce((s,c)=>s+c[0],0)/pl[0].c.length,la:pl[0].c.reduce((s,c)=>s+c[1],0)/pl[0].c.length});WP.push(w);pl.forEach(g=>nd.di.push({nama:nm,luas:lb+' ha',pts:g.c.map(P),raw:g.c,nolabel:1}))}
-  else if(/^s/.test(t)){if(!ln.length){sk++;return}ln.forEach(g=>{nd.sal.push(g.c.map(P));nd.salk.push(t);nd.saln.push(nm);nd.salr.push(g.c);nd.salu.push(base.id)});base.pj=Math.round(ln.reduce((s,g)=>s+klen(g.c),0));JR.push(base)}
-  else if(t==='bendung'){if(!pt.length){sk++;return}const p=P(pt[0].c[0]),id='K'+Date.now().toString(36)+nd.bn.length;nd.bn.push({id,nama:nm,di,x:p[0],y:p[1],lo:pt[0].c[0][0],la:pt[0].c[0][1],keb:0,debit:[]});WB[id]=w}
-  else{const q=pt[0]&&P(pt[0].c[0]);if(q){base.x=q[0];base.y=q[1];base.lo=pt[0].c[0][0];base.la=pt[0].c[0][1]}JR.push(base)}
-  cnt[t]=(cnt[t]||0)+1}));
- C=[];init(nd,[]);lrender();$('#gr').innerHTML='';$('#gq').value='';
- note2('#kmsg',`Impor selesai: ${Object.entries(cnt).map(([t,n])=>n+' '+(KLAB[t]||t).replace(/ \(.*\)/,'').toLowerCase()).join(', ')}.${sk?` ${sk} penanda dilewati karena tidak punya bentuk yang sesuai.`:''} Hasilnya bisa dilihat di Ringkasan dan Peta.`)};
-const fm=m=>m==null?'-':m>=1000?`${Math.floor(m/1000)} km ${Math.round(m%1000)} m`:`${Math.round(m)} m`;
-$('#xgo').onclick=()=>{const t=$('#xt').value,m=mp(),rep=$('#xm').value==='rep',g=(r,f)=>m[f]?r[m[f]]:undefined,req=t==='tan'?'di':'n';let n=0,sk=0,nf=0,up=0;
- if(!m[req])return say('Pilih kolom untuk '+(t==='tan'?'daerah irigasi':'nama')+' terlebih dahulu.',1);
- if(t==='petak'){if(rep){PT.length=0;WP.length=0}
-  XR.forEach(r=>{const nm=str(g(r,'n')),di=str(g(r,'di'));if(!nm){sk++;return}const ex=PT.find(p=>p.n.toLowerCase()===nm.toLowerCase()&&(!di||p.di===di));if(ex){['lb','sem','olah','tumb','pal','tm','tt','q'].forEach(k=>{if(m[k]&&g(r,k)!==''&&g(r,k)!=null)ex[k]=num(g(r,k))});up++;return}
-   const p={n:nm,di,sal:str(g(r,'sal'))};['lb','sem','olah','tumb','pal','tm','tt','q'].forEach(k=>p[k]=num(g(r,k)));PT.push(p);WP.push(Math.round(num(g(r,'w')))||1);n++});lrender()}
- else if(t==='bendung'){if(rep)D.bn=[];const L=[];
-  XR.forEach(r=>{const nm=str(g(r,'n'));if(!nm||D.bn.some(b=>b.nama===nm)){sk++;return}L.push({nm,di:str(g(r,'di')),w:Math.round(num(g(r,'w'))),keb:num(g(r,'keb')),lat:g(r,'lat'),lng:g(r,'lng')})});
-  const gp=L.filter(o=>o.lat!=null&&o.lng!=null&&o.lat!==''&&o.lng!==''),xs=gp.map(o=>num(o.lng)),ys=gp.map(o=>num(o.lat)),x0=Math.min(...xs),y1=Math.max(...ys),k=Math.min(520/((Math.max(...xs)-x0)||1),340/((y1-Math.min(...ys))||1));
-  L.forEach((o,i)=>{const id='X'+Date.now().toString(36)+i,has=gp.includes(o);D.bn.push({id,nama:o.nm,di:o.di,x:has?+(40+(num(o.lng)-x0)*k).toFixed(1):60+(i%8)*70,y:has?+(40+(y1-num(o.lat))*k).toFixed(1):400,keb:o.keb,debit:[]});WB[id]=o.w||0;n++});all()}
- else if(t==='jar'){if(rep)JR.length=0;
-  XR.forEach(r=>{const nm=str(g(r,'n')),k=tyOf(str(g(r,'k'))),di=str(g(r,'di'));if(!nm||!k||JR.some(j=>j.k===k&&j.n===nm&&j.di===di)){sk++;return}
-   JR.push({k,n:nm,di,w:Math.round(num(g(r,'w'))),ind:str(g(r,'ind')),pj:g(r,'pj')==null||g(r,'pj')===''?null:num(g(r,'pj')),kd:str(g(r,'kd'))||'-'});n++})}
- else if(t==='tan'){if(rep)C=[];let ld='',lm='';XR.forEach(r=>{const raw=str(g(r,'di'));if(/^(jumlah|total|jml)/i.test(raw)){sk++;return}const di=raw||ld,mu=str(g(r,'m'))||lm;ld=di;lm=mu;if(!di){sk++;return}const v=['padi','jagung','pal','teb','lain'].map(k=>num(g(r,k)));if(!v.some(x=>x)){sk++;return}C.push({di,m:mu||'-',padi:v[0],jagung:v[1],pal:v[2],teb:v[3],lain:v[4]});n++});all()}
- else{XR.forEach(r=>{const nm=str(g(r,'n')).toLowerCase(),b=D.bn.find(x=>x.nama.toLowerCase()===nm),tt=dt(g(r,'t'));if(!b){nf++;return}if(!tt){sk++;return}
-   const v=num(g(r,'v'));b.debit=b.debit.filter(x=>x.t!==tt);b.debit.push({t:tt,v});S[b.id]=(S[b.id]||[]).filter(x=>x.t!==tt).concat({t:tt,v});n++});
-  D.bn.forEach(b=>b.debit.sort((a,c)=>a.t<c.t?-1:1));try{localStorage.setItem('pi_debit',JSON.stringify(S))}catch(x){}all()}
- say(`${n} data ${XT[t].l.toLowerCase()} diimpor${up?`, ${up} diperbarui`:''}${sk?`, ${sk} dilewati (kosong, ganda, atau jenis tidak dikenali)`:''}${nf?`, ${nf} baris debit tanpa bendung yang cocok`:''}.`,n+up===0)};
-function plabels(){let h='';const pm={};PT.forEach(p=>pm[p.n]=p);
- D.di.forEach(d=>{if(!d.nolabel||!d.pts.length)return;const p=pm[d.nama],cx=+(d.pts.reduce((s,q)=>s+q[0],0)/d.pts.length).toFixed(1),cy=+(d.pts.reduce((s,q)=>s+q[1],0)/d.pts.length).toFixed(1),b=p?+p.lb.toFixed(1):'',c=p?+(p.sem+p.olah+p.tumb+p.pal+p.tm+p.tt).toFixed(1):'',nm=String(d.nama).replace(/^petak tersier\s*/i,'').slice(0,22);
-  h+=`<g transform="translate(${cx} ${cy})" pointer-events="none"><g class="lt sz" font-size="6.5" text-anchor="middle"><rect x="-30" y="-9" width="60" height="18" rx="1.5" fill="var(--surf)" fill-opacity=".88" stroke="var(--ink)" stroke-width=".6"/><path d="M-30,0H30M0,0V9" stroke="var(--ink)" stroke-width=".5"/><text y="-2.5" fill="var(--ink)">${esc(nm)}</text><text x="-15" y="6.8" fill="var(--ink)">${b}</text><text x="15" y="6.8" fill="var(--ink)">${c}</text></g></g>`});return h}
-const IDB={open:()=>new Promise((res,rej)=>{try{const r=indexedDB.open('irigasi',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}}),
- async get(k){const d=await IDB.open();return new Promise((res,rej)=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})},
- async set(k,v){const d=await IDB.open();return new Promise((res,rej)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})},
- async del(k){const d=await IDB.open();return new Promise((res,rej)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').delete(k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})}};
-let AUTO=false,LAST='';
-(async()=>{try{const s=await IDB.get('state');if(s){let smp=false;try{const o=JSON.parse(s);smp=!!(o.D&&(o.D.sample||(o.D.bn&&o.D.bn.length===5&&o.D.bn.every(b=>/^Bendung Contoh \d$/.test(b.nama)))))}catch(e){}if(smp){await IDB.del('state')}else{LAST=s;await $('#frs').onchange({target:{files:[{text:async()=>s}],value:''}})}}}catch(e){}AUTO=true})();
-const snap=async()=>{if(!AUTO)return;try{const s=JSON.stringify(BK());if(s!==LAST){await IDB.set('state',s);LAST=s}}catch(e){}};
-setInterval(snap,4000);document.addEventListener('visibilitychange',()=>{if(document.hidden)snap()});
-let WP2=0;$('#wipe').onclick=async()=>{const b=$('#wipe');if(!WP2){WP2=1;b.textContent='Klik sekali lagi untuk menghapus semua data tersimpan';setTimeout(()=>{WP2=0;b.textContent='Hapus semua data tersimpan di perangkat ini'},5000);return}
- AUTO=false;try{await IDB.del('state')}catch(e){}['pi_debit','pi_cat','pi_info'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});location.reload()};
-const fmt2=n=>fmt(Math.round((+n||0)*100)/100),KMD=l=>l==null||isNaN(l)?'-':fmt(Math.round(l*10)/10)+' lt/dt';
-const avg=b=>{const a=b.debit.slice(-10);return a.length?a.reduce((s,e)=>s+e.v,0)/a.length:null};
-const nf=t=>`Tidak ditemukan "<b>${esc(t)}</b>". Ketik lalu pilih nama dari daftar yang muncul.`;
-const cdOf=s=>String(s||'').replace(/^(PT|ST|SK|BK|BS|BB|BG)\s+/i,'').toLowerCase().replace(/\s+/g,'');
-const pip=(x,y,p)=>{let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const a=p[i],b=p[j];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])c=!c}return c};
-const geoAt=(lo,la)=>{const g=GEO.desa.find(p=>pip(lo,la,p.pts)),k=GEO.kec.find(p=>pip(lo,la,p.pts));return{desa:g?g.n:'',kec:(k?k.n:'')||(g&&g.k)||(g&&KECM[g.n.toLowerCase()])||''}};
-const diNames=()=>[...new Set([...PT.map(p=>p.di),...D.bn.map(b=>b.di),...JR.map(j=>j.di)].filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-function ents(kinds){const o=[];
- if(kinds.includes('di'))diNames().forEach(n=>o.push({k:'di',n,l:'Daerah irigasi'}));
- if(kinds.includes('bendung'))D.bn.forEach(b=>o.push({k:'bendung',n:b.nama,o:b,l:'Bendung'}));
- if(kinds.includes('petak'))PT.forEach(p=>o.push({k:'petak',n:p.n,o:p,l:'Petak tersier'}));
- if(kinds.includes('bangunan'))JR.forEach(j=>{if(!/^s/.test(j.k))o.push({k:'bangunan',n:j.n,o:j,l:TY[j.k]||'Bangunan'})});
- return o}
-const resolve=(t,kinds)=>{t=String(t||'').trim().toLowerCase();if(!t)return null;const a=ents(kinds);return a.find(e=>e.n.toLowerCase()===t)||(()=>{const m=a.filter(e=>e.n.toLowerCase().includes(t));return m.length===1?m[0]:null})()};
-const juruDI=di=>[...new Set(PT.map((p,i)=>p.di===di&&WP[i]?wl(WP[i]):'').filter(Boolean))].join(', ');
-function diDesa(di){const m={};PT.forEach(p=>{if(p.di!==di||!p.ds)return;p.ds.forEach(x=>{m[x[0]]=(m[x[0]]||0)+(p.ds.length===1?p.lb:x[1])})});return Object.entries(m).sort((a,b)=>b[1]-a[1])}
-function diCo(di){const a=[...D.bn,...JR,...PT].filter(x=>x.di===di&&x.lo!=null);return a.length?{lo:a.reduce((s,x)=>s+x.lo,0)/a.length,la:a.reduce((s,x)=>s+x.la,0)/a.length}:{}}
-function locOf(e){const c=e.k==='di'?diCo(e.n):{lo:e.o.lo,la:e.o.la},m=LOC[e.k+'|'+e.n];
- if(m)return{desa:m.d,kec:m.k,src:'isian manual',...c};
- if(c.lo!=null&&GEO.desa.length){const g=geoAt(c.lo,c.la);if(g.desa)return{...g,src:'batas desa pada peta',...c}}
- const ke=ds=>[...new Set(ds.map(x=>KECM[x.toLowerCase()]).filter(Boolean))].join(', ');
- if(e.k==='petak'&&e.o.ds&&e.o.ds.length){const d=e.o.ds.map(x=>x[0]);return{desa:d.join(', '),kec:ke(d),src:'laporan 05a, desa yang dilayani',...c}}
- if(e.k==='di'){const d=diDesa(e.n).map(x=>x[0]);if(d.length)return{desa:d.slice(0,10).join(', ')+(d.length>10?` dan ${d.length-10} lainnya`:''),kec:ke(d),src:'laporan 05a, desa yang dilayani DI',...c}}
- if(e.k!=='di'&&e.o.di){const d=diDesa(e.o.di).map(x=>x[0]);if(d.length)return{desa:'(tidak diketahui pasti) DI ini melayani: '+d.slice(0,6).join(', '),kec:'',src:'perkiraan dari DI',...c}}
- return{desa:'',kec:'',src:'',...c}}
-function a1(){const el=$('#a1'),t=$('[data-q="1"]').value;if(!t.trim()){el.hidden=true;return}el.hidden=false;
- const e=resolve(t,['petak','di','bendung']);if(!e)return el.innerHTML=nf(t);
- const di=e.k==='di'?e.n:e.o.di,jr=juruDI(di);
- let h=`<b>${esc(e.n)}</b> (${e.l}) berada di DI <b>${esc(di)}</b>${jr?`, dipegang juru ${esc(jr)}`:''}.`;
- if(e.k==='petak')h+=`<br>Debit terukur di petak ini: <b>${e.o.q>0?KMD(e.o.q):'belum ada data'}</b>.`;
- const bs=D.bn.filter(b=>b.di===di&&(e.k!=='bendung'||b===e.o));
- if(bs.length)h+='<br><br>Debit di bendung yang mengairi DI ini:'+bs.map(b=>{const l=last(b),s=stat(b),av=avg(b);return`<br>• <b>${esc(b.nama)}</b>: ${l?`terakhir ${KMD(l.v)} (${l.t})`:'belum ada data debit'}${av!=null?`, rata-rata ${KMD(av)}`:''}${b.keb?`, kebutuhan ${KMD(b.keb)}`:''} <span class="badge" style="background:${s[1]}">${s[0]}</span>`}).join('');
- else h+='<br><br>Belum ada data bendung untuk DI ini.';
- const ms=JR.filter(j=>j.k==='bu'&&j.di===di&&j.av!=null);
- if(ms.length)h+=`<br><br>Tempat pengukuran debit di DI ini (${ms.length}):`+ms.slice(0,6).map(j=>`<br>• ${esc(j.n)}: rata-rata ${KMD(j.av)}${j.q!=null?`, rencana ${KMD(j.q)}`:''}`).join('')+(ms.length>6?`<br>… dan ${ms.length-6} lainnya`:'');
- el.innerHTML=h}
-function a2(){const el=$('#a2'),t=$('[data-q="2"]').value;if(!t.trim()){el.hidden=true;return}el.hidden=false;
- const e=resolve(t,['di','bendung']);if(!e)return el.innerHTML=nf(t);
- const di=e.k==='di'?e.n:e.o.di,ps=PT.filter(p=>p.di===di),bs=D.bn.filter(b=>b.di===di),ds=diDesa(di),jr=juruDI(di),lb=ps.reduce((s,p)=>s+p.lb,0),lt=ps.reduce((s,p)=>s+p.sem+p.olah+p.tumb+p.pal+p.tm+p.tt,0);
- el.innerHTML=`${e.k==='bendung'?`Bendung <b>${esc(e.n)}</b> mengairi DI <b>${esc(di)}</b>.`:`DI <b>${esc(di)}</b>:`}<br>• Bendung: ${bs.map(b=>esc(b.nama)).join(', ')||'belum ada data'}${bs.length>1?' <small>(data tidak memisahkan petak per bendung, jadi angka di bawah mencakup seluruh DI)</small>':''}<br>• Petak tersier: <b>${ps.length}</b>, luas baku <b>${fmt2(lb)} ha</b>, luas tanam saat ini ${fmt2(lt)} ha<br>• Juru: ${esc(jr||'belum diketahui')}<br>• Desa yang dilayani: ${ds.length?esc(ds.slice(0,10).map(x=>x[0]+' ('+fmt2(x[1])+' ha)').join(', '))+(ds.length>10?` dan ${ds.length-10} lainnya`:''):'belum ada data (ada di laporan Excel 05a)'}<br>• Petak: ${ps.length?esc(ps.slice(0,15).map(p=>p.n).join(', '))+(ps.length>15?` dan ${ps.length-15} lainnya`:''):'-'}`}
-function a3(){const el=$('#a3'),t=$('[data-q="3"]').value;if(!t.trim()){el.hidden=true;return}el.hidden=false;
- const e=resolve(t,['di','bendung','bangunan','petak']);if(!e)return el.innerHTML=nf(t);
- const L=locOf(e),di=e.k==='di'?e.n:e.o.di,key=e.k+'|'+e.n;
- let h=`<b>${esc(e.n)}</b> (${e.l})${e.k!=='di'&&di?`, DI ${esc(di)}`:''}<br>• Desa: <b>${esc(L.desa||'belum diketahui')}</b><br>• Kecamatan: <b>${esc(L.kec||'belum diketahui')}</b>${L.src?` <small>(sumber: ${L.src})</small>`:''}`;
- h+=L.lo!=null?`<br>• Koordinat: ${L.la.toFixed(5)}, ${L.lo.toFixed(5)} — <a href="https://www.google.com/maps?q=${L.la},${L.lo}" target="_blank" rel="noopener">buka di Google Maps</a> · <a href="https://earth.google.com/web/@${L.la},${L.lo},0a,800d,35y,0h,0t,0r" target="_blank" rel="noopener">buka di Google Earth</a>`:'<br>• Koordinat: belum ada (data berasal dari laporan Excel tanpa titik peta)';
- if(!L.desa||!L.kec||LOC[key]||L.src==='perkiraan dari DI')h+=`<div class="srch" style="margin-top:10px"><input data-loc="d" placeholder="Desa" value="${esc(LOC[key]?LOC[key].d:'')}"><input data-loc="k" placeholder="Kecamatan" value="${esc(LOC[key]?LOC[key].k:'')}"><button class="btn" data-act="saveloc" style="width:auto;padding:8px 16px">Simpan lokasi</button></div><small>Isi sekali, tersimpan. Agar terisi otomatis, impor batas desa dan kecamatan dari KMZ, atau isi daftar desa dan kecamatan di Setelan.</small>`;
- el.dataset.key=key;el.innerHTML=h}
-function chain(e){const S=JR.filter(j=>/^s/.test(j.k)),byHl={};S.forEach(j=>{if(j.hl)byHl[j.hl]=j});let st=null;
- if(e.k==='petak'){const c=cdOf(e.o.nom);if(!c)return{err:'Petak ini belum punya kode nomenklatur, jalur hanya bisa dihitung untuk data survei aset.'};st=S.find(j=>j.k==='st'&&cdOf(j.nom)===c);if(!st)return{err:'Saluran tersier untuk petak ini tidak ditemukan di data.'}}
- else{if(!e.o.id)return{err:'Bangunan ini tidak punya keterkaitan hulu-hilir di data (hanya ada pada data survei aset).'};st=byHl[e.o.id];if(!st)return{err:'Tidak ada saluran yang tercatat mengalir ke bangunan ini.'}}
- const segs=[],seen=new Set();let cur=st;while(cur&&!seen.has(cur)){seen.add(cur);segs.unshift(cur);cur=cur.hu?byHl[cur.hu]:null}
- const f=segs[0],src=f.hu?((JR.find(j=>j.id===f.hu)||{}).n||(D.bn.find(b=>b.sid===f.hu)||{}).nama||''):'';return{segs,src}}
-function a4(){const el=$('#a4'),t=$('[data-q="4"]').value,g=$('[data-q="4b"]').value;if(!t.trim()&&!g.trim()){el.hidden=true;return}el.hidden=false;let h='';
- if(t.trim()){const e=resolve(t,['di']);if(!e)h+=nf(t);else{const s=['sp','ss','st','sk','sb'].map(k=>{const a=JR.filter(j=>j.k===k&&j.di===e.n);return[k,a.reduce((x,j)=>x+(j.pj||0),0),a.length]}),tot=s.reduce((x,y)=>x+y[1],0);
-  h+=tot?`Panjang saluran DI <b>${esc(e.n)}</b>: <b>${fm(tot)}</b> seluruhnya`+s.filter(x=>x[2]).map(x=>`<br>• ${TY[x[0]]} (${x[2]} ruas): ${fm(x[1])}`).join(''):`DI <b>${esc(e.n)}</b>: belum ada data panjang saluran (tersedia dari data survei aset atau KMZ).`}}
- if(g.trim()){const e=resolve(g,['petak','bangunan']);if(h)h+='<br><br>';if(!e)h+=nf(g);else{const c=chain(e);if(c.err)h+=`<b>${esc(e.n)}</b>: ${c.err}`;else{const tot=c.segs.reduce((x,j)=>x+(j.pj||0),0);h+=`Jalur air ke <b>${esc(e.n)}</b> (${e.l}): <b>${fm(tot)}</b> dari ${c.src?`<b>${esc(c.src)}</b>`:'titik hulu saluran yang tercatat'}`+c.segs.map((j,i)=>`<br>${i+1}. ${TY[j.k]} ${esc(j.n)}: ${fm(j.pj)}`).join('')}}}
- el.innerHTML=h}
-const SEL5=new Set();
-function list5(){const t=$('[data-q="5"]').value,e=resolve(t,['di']),f=$('[data-q="5f"]').value.toLowerCase();
- if(!e){$('#l5').innerHTML=t.trim()?nf(t):'<p class="note">Pilih daerah irigasi lebih dulu, lalu centang petak tersier.</p>';$('#s5').hidden=true;return}
- const rows=PT.map((p,i)=>[p,i]).filter(([p])=>p.di===e.n&&(!f||p.n.toLowerCase().includes(f)));
- $('#l5').innerHTML=rows.slice(0,300).map(([p,i])=>`<label class="pk"><input type="checkbox" data-p="${i}"${SEL5.has(i)?' checked':''}><span>${esc(p.n)}</span><small>${fmt2(p.lb)} ha</small></label>`).join('')+(rows.length>300?'<p class="note">Menampilkan 300 petak pertama; gunakan kolom cari.</p>':'')||'<p class="note">Tidak ada petak.</p>';
- $('#l5').dataset.ids=JSON.stringify(rows.map(r=>r[1]));sum5()}
-function sum5(){const idx=[...SEL5].filter(i=>PT[i]),el=$('#s5');if(!idx.length){el.hidden=true;return}el.hidden=false;
- let tl=0,tq=0,tb=0;const rows=idx.map(i=>{const p=PT[i],l=lpr(p),k=l*KP.fpr;tl+=l;tq+=p.q;tb+=p.lb;return`<tr><td>${esc(p.n)}</td><td class="num">${fmt2(p.lb)}</td><td class="num">${fmt2(l)}</td><td class="num">${fmt2(k)}</td><td class="num">${p.q>0?fmt2(p.q):'-'}</td></tr>`}).join('');
- const kb=tl*KP.fpr;
- el.innerHTML=`<b>${idx.length} petak terpilih</b><div class="scroll"><table style="min-width:420px"><thead><tr><th>Petak</th><th class="num">Luas baku (ha)</th><th class="num">LPR</th><th class="num">Kebutuhan (lt/dt)</th><th class="num">Terukur (lt/dt)</th></tr></thead><tbody>${rows}</tbody></table></div><br>Total luas baku: <b>${fmt2(tb)} ha</b><br>Total LPR: <b>${fmt2(tl)}</b> ha palawija<br>Kebutuhan di pintu tersier (FPR ${KP.fpr} x LPR): <b>${KMD(kb)}</b><br>Kebutuhan di intake (dibagi efisiensi ${KP.ei}): <b>${KMD(kb/KP.ei)}</b><br>Debit terukur total: <b>${tq>0?KMD(tq):'belum ada data'}</b>${kb&&tq?` — Faktor K ${(tq/kb).toFixed(2)}`:''}${tl?'':'<br><small>LPR masih 0: isi luas tanam petak (impor laporan Excel atau isi di tab LPR dan FPR) agar kebutuhan terhitung.</small>'}`}
-function a6(){const f=($('[data-q="6"]')||{value:''}).value.toLowerCase(),g={};
- const add=(w,di,k,v)=>{if(!di)return;const m=(g[w]=g[w]||{});const o=(m[di]=m[di]||{p:0,lb:0,b:0});if(k==='p'){o.p++;o.lb+=v}else o.b++};
- PT.forEach((p,i)=>add(WP[i]||0,p.di,'p',p.lb));D.bn.forEach(b=>add(WB[b.id]||0,b.di,'b'));
- const rows=Object.keys(g).map(Number).sort((a,b)=>(a||99)-(b||99)).map(w=>{const nm=wl(w),ds=Object.entries(g[w]).filter(([d])=>!f||d.toLowerCase().includes(f)||nm.toLowerCase().includes(f)).sort((a,b)=>a[0].localeCompare(b[0]));if(!ds.length)return'';
-  const tp=ds.reduce((s,x)=>s+x[1].p,0),tl=ds.reduce((s,x)=>s+x[1].lb,0);return`<tr><td><b>${esc(nm)}</b></td><td>${ds.map(([d,o])=>`<span class="chip">${esc(d)} (${o.p} petak)</span>`).join('')}</td><td class="num">${ds.length}</td><td class="num">${tp}</td><td class="num">${fmt2(tl)}</td></tr>`}).join('');
- $('#a6').innerHTML=rows?`<table style="min-width:560px"><thead><tr><th>Juru</th><th>Daerah irigasi yang dipegang</th><th class="num">DI</th><th class="num">Petak</th><th class="num">Luas baku (ha)</th></tr></thead><tbody>${rows}</tbody></table>`:'<p class="note">Tidak ada yang cocok. Wilayah juru terisi setelah mengimpor laporan 10 harian (Excel) atau mengatur wilayah di KMZ.</p>'}
-const TNY=()=>{const c=(n,t,d,body)=>`<div class="card"><h2>${n}. ${t}</h2><p class="note">${d}</p>${body}</div>`,i=(q,ph,l)=>`<input data-q="${q}" list="${l}" placeholder="${ph}" aria-label="${ph}" style="width:100%;box-sizing:border-box;margin-top:4px">`;
- return `<p class="note" style="margin:0 0 12px">Ketik nama lalu pilih dari daftar yang muncul. Jawaban memakai data yang sudah diimpor.</p><div class="qgrid">`+
- c(1,'Berapa debit airnya?','Debit di DI atau bendung yang mengairi suatu petak tersier, atau yang mengalir ke DI tertentu.',i(1,'Nama petak tersier, DI, atau bendung','dl1')+'<div class="ans" id="a1" hidden></div>')+
- c(2,'Daerah mana yang diairi?','Petak, desa, dan luas yang diairi oleh DI atau bendung tertentu.',i(2,'Nama DI atau bendung','dl2')+'<div class="ans" id="a2" hidden></div>')+
- c(3,'Di mana letaknya?','Desa dan kecamatan dari DI, bendung, pintu atau bangunan, dan petak tersier.',i(3,'Nama DI, bendung, bangunan, atau petak','dl3')+'<div class="ans" id="a3" hidden></div>')+
- c(4,'Berapa panjang jaringannya?','Panjang saluran seluruh DI, atau jalur dari hulu ke petak tersier atau bangunan bagi.',i(4,'Nama DI (panjang seluruhnya)','dl4')+i('4b','Tujuan: petak tersier atau bangunan (jalur dari hulu)','dl4b')+'<div class="ans" id="a4" hidden></div>')+
- c(5,'Berapa kebutuhan airnya?','Pilih satu DI, centang petak tersier, lalu lihat kebutuhan total.',i(5,'Nama daerah irigasi','dl5')+'<div class="srch" style="margin-top:8px"><input data-q="5f" placeholder="Cari nama petak" style="flex:1"><button class="btn" data-act="all5" style="width:auto;padding:8px 14px">Pilih semua yang tampil</button><button class="btn" data-act="none5" style="width:auto;padding:8px 14px;background:var(--line);color:var(--ink)">Kosongkan</button></div><div id="l5" class="pklist"></div><div class="ans" id="s5" hidden></div>')+
- c(6,'DI mana saja yang dipegang juru?','Daftar daerah irigasi untuk setiap juru, atau cari nama DI untuk tahu juru yang memegangnya.','<input data-q="6" placeholder="Cari nama juru atau DI" aria-label="Cari juru atau DI" style="width:100%;box-sizing:border-box;margin-top:4px"><div id="a6" class="scroll" style="margin-top:10px"></div>')+
- `</div><div id="tnydl"></div>`};
-function tnyRender(){if(!$('#tny').children.length)$('#tny').innerHTML=TNY();
- const dl=(id,k)=>`<datalist id="${id}">${ents(k).map(e=>`<option value="${esc(e.n)}" label="${esc(e.l)}"></option>`).join('')}</datalist>`;
- $('#tnydl').innerHTML=dl('dl1',['petak','di','bendung'])+dl('dl2',['di','bendung'])+dl('dl3',['di','bendung','bangunan','petak'])+dl('dl4',['di'])+dl('dl4b',['petak','bangunan'])+dl('dl5',['di']);a6();list5()}
-$('#tny').addEventListener('input',e=>{const q=e.target.dataset.q;if(q==='1')a1();else if(q==='2')a2();else if(q==='3')a3();else if(q==='4'||q==='4b')a4();else if(q==='5'){SEL5.clear();list5()}else if(q==='5f')list5();else if(q==='6')a6()});
-$('#tny').addEventListener('change',e=>{if(e.target.dataset.p!=null){const n=+e.target.dataset.p;e.target.checked?SEL5.add(n):SEL5.delete(n);sum5()}});
-$('#tny').addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(!a)return;const x=a.dataset.act;
- if(x==='saveloc'){const el=$('#a3'),d=el.querySelector('[data-loc="d"]').value.trim(),k=el.querySelector('[data-loc="k"]').value.trim();if(d||k)LOC[el.dataset.key]={d,k};else delete LOC[el.dataset.key];a3()}
- else if(x==='all5'){JSON.parse($('#l5').dataset.ids||'[]').forEach(n=>SEL5.add(n));list5()}
- else if(x==='none5'){SEL5.clear();list5()}});
-const KCOL={'ff00ffff':['kuning','ss'],'ff0000ff':['merah','sp'],'ff7fff00':['hijau','st'],'ff00ff00':['hijau','st'],'ffff0000':['biru','sb'],'':['standar (tanpa warna)','sk']};
-const KIC={'ylw-pushpin.png':['Bendung','bendung'],'phone.png':['Bangunan ukur','bu'],'square.png':['Box tersier','bt'],'donut.png':['Bang. bagi (BP)','bg'],'u.png':['Ujung saluran',''],'arrow-reverse.png':['Pelimpah samping','pl']};
-function ksmartAll(all){KDEF={};const L=(l,t)=>{KDEF[l]=t;return l};
- all.forEach(r=>{const s=(r.n||'').toLowerCase(),g=r.g[0]?r.g[0].t:'',root=(r.p0||'').split(' / ')[0].trim();if(root)r.f=root;let l;
-  if(g==='Point'){l=/\bbd\b|bendung/.test(s)?L('Bendung','bendung'):/\bbu\b|ukur|duga/.test(s)?L('Bangunan ukur','bu'):/\bbok\b|\bbox\b/.test(s)?L('Box tersier','bt'):/bagi/.test(s)&&/sadap/.test(s)?L('Bang. bagi sadap','bbs'):/\bbp\b|bagi/.test(s)?L('Bang. bagi (BP)','bg'):/\bbt\b|sadap/.test(s)?L('Bang. sadap (BT)','bs'):/pelimpah/.test(s)?L('Pelimpah samping','pl'):/gorong/.test(s)?L('Gorong-gorong','gg'):/jembatan/.test(s)?L('Jembatan','jb'):/terjun/.test(s)?L('Terjunan','tj'):/cuci/.test(s)?L('Tangga cuci','tc'):/mandi/.test(s)?L('Tempat mandi hewan','mh'):/ujung/.test(s)?L('Ujung saluran',''):/suplisi|suplesi/.test(s)?L('Suplesi','bl'):KIC[r.ic]?L(KIC[r.ic][0],KIC[r.ic][1]):L('Titik lain','bl')}
-  else if(g==='Line'){l=/prim/.test(s)?L('Saluran primer','sp'):/sek|\bsec\b/.test(s)?L('Saluran sekunder','ss'):/ters/.test(s)?L('Saluran tersier','st'):/kuarter|kwarter/.test(s)?L('Saluran kuarter','sk'):/pembuang|drain/.test(s)?L('Saluran pembuang','sb'):(()=>{const c=KCOL[r.lc||'']||['warna '+r.lc,'st'];return L('Garis '+c[0],c[1])})()}
-  else l=/batas|\bdi\b/.test(s)&&!/areal|petak/.test((r.p0||'').toLowerCase())?L('Batas DI','di'):L('Petak tersier (areal)','petak');
-  r.p=l})}
-function clampZ(){MZ.k=Math.min(80,Math.max(1,MZ.k));MZ.x=Math.min(0,Math.max(600-600*MZ.k,MZ.x));MZ.y=Math.min(0,Math.max(420-420*MZ.k,MZ.y))}
-function applyZoom(){const g=$('#mvp'),m=$('#map');if(!g)return;clampZ();g.setAttribute('transform',`translate(${MZ.x} ${MZ.y}) scale(${MZ.k})`);m.style.setProperty('--zs',String(1/MZ.k));m.setAttribute('data-z',MZ.k<2.5?'0':MZ.k<6?'1':'2');clearTimeout(window.__tl);window.__tl=setTimeout(tilesRefresh,120);if(typeof measDraw==='function')measDraw()}
-function zoomTo(x,y,k){MZ.k=k||8;MZ.x=300-x*MZ.k;MZ.y=210-y*MZ.k;applyZoom()}
-(()=>{const m=$('#map'),P=new Map();let drag=null,moved=0,pd=0;
- const U=(cx,cy)=>{try{const p=m.createSVGPoint();p.x=cx;p.y=cy;const q=p.matrixTransform(m.getScreenCTM().inverse());return[q.x,q.y]}catch(e){return[300,210]}};
- const sc=()=>{try{return m.getScreenCTM().a||1}catch(e){return 1}};
- const zoom=(f,ux,uy)=>{const k=Math.min(80,Math.max(1,MZ.k*f)),r=k/MZ.k;MZ.x=ux-(ux-MZ.x)*r;MZ.y=uy-(uy-MZ.y)*r;MZ.k=k;applyZoom()};
- m.addEventListener('wheel',e=>{e.preventDefault();const[a,b]=U(e.clientX,e.clientY);zoom(e.deltaY<0?1.3:1/1.3,a,b)},{passive:false});
- m.addEventListener('pointerdown',e=>{P.set(e.pointerId,[e.clientX,e.clientY]);moved=0;if(P.size===1)drag={x:e.clientX,y:e.clientY,mx:MZ.x,my:MZ.y};else{drag=null;const a=[...P.values()];pd=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1])}});
- addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,[e.clientX,e.clientY]);
-  if(P.size===1&&drag){const s=sc(),dx=e.clientX-drag.x,dy=e.clientY-drag.y;moved=Math.max(moved,Math.hypot(dx,dy));if(moved>3){MZ.x=drag.mx+dx/s;MZ.y=drag.my+dy/s;applyZoom()}}
-  else if(P.size===2){const a=[...P.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);if(pd){const[c,u]=U((a[0][0]+a[1][0])/2,(a[0][1]+a[1][1])/2);zoom(d/pd,c,u);moved=9}pd=d}});
- const up=e=>{P.delete(e.pointerId);drag=null;pd=0;if(P.size===1){const a=[...P.values()][0];drag={x:a[0],y:a[1],mx:MZ.x,my:MZ.y}}};
- addEventListener('pointerup',up);addEventListener('pointercancel',up);
- m.addEventListener('click',e=>{if(moved>3){e.stopPropagation();e.preventDefault();moved=0;return}if(MEAS.on){e.stopPropagation();e.preventDefault();measAdd(e.clientX,e.clientY)}},true);
- m.addEventListener('dblclick',e=>{const[a,b]=U(e.clientX,e.clientY);zoom(2,a,b)});
- document.querySelector('.mz').addEventListener('click',e=>{const z=e.target.closest('[data-zm]');if(!z)return;const t=z.dataset.zm;if(t==='0'){MZ.k=1;MZ.x=0;MZ.y=0;applyZoom()}else if(t==='m')measToggle();else zoom(t==='+'?1.6:1/1.6,300,210)});
- m.addEventListener('click',e=>{const s=e.target.closest('[data-s]'),p=e.target.closest('[data-pi]');
-  if(s){const i=+s.dataset.s,u=(D.salu||[])[i],j=(u&&JR.find(x=>x.id===u))||JR.find(x=>x.k===(D.salk||[])[i]&&x.n===(D.saln||[])[i]);if(j)sinfo(j)}
-  else if(p){const d=D.di[+p.dataset.pi];if(d&&d.nolabel){const i=PT.findIndex(x=>x.n===d.nama);if(i>=0)pinfo(i)}}});
- dlg.addEventListener('click',e=>{const f=e.target.closest('[data-fly]');if(!f)return;const[x,y]=f.dataset.fly.split(',').map(Number);dlg.close();show('peta');zoomTo(x,y,8)})})();
-applyZoom();
-$('#fk').onchange=kmzHandler;
-const PT0=JSON.stringify(PT),JR0=JSON.stringify(JR),WP0=WP.slice(),WB0=JSON.stringify(WB);
-function loadSample(){PT.length=0;PT.push(...JSON.parse(PT0));WP.length=0;WP.push(...WP0);JR.length=0;JR.push(...JSON.parse(JR0));Object.keys(WB).forEach(k=>delete WB[k]);Object.assign(WB,JSON.parse(WB0));init(sample(),sampleCrops());D.sample=true;lrender()}
-function clearAllData(){PT.length=0;WP.length=0;JR.length=0;Object.keys(WB).forEach(k=>delete WB[k]);GEO={desa:[],kec:[]};LOC={};init({bn:[],di:[],sal:[],salk:[],saln:[]},[]);lrender()}
-$('#reset').onclick=()=>{loadSample();say('Data contoh dimuat.')};
-let CLR=0;$('#clr').onclick=()=>{const b=$('#clr');if(!CLR){CLR=1;b.textContent='Klik sekali lagi untuk mengosongkan semua data peta dan laporan';setTimeout(()=>{CLR=0;b.textContent='Kosongkan semua data peta dan laporan'},5000);return}CLR=0;b.textContent='Kosongkan semua data peta dan laporan';clearAllData();say('Semua data peta dan laporan dikosongkan. Info dasar tetap tersimpan.')};
-clearAllData();
-function removeSampleOnly(){const sm=s=>/^DI Contoh/i.test(s||'');
- const keep=[];PT.forEach((p,i)=>{if(!sm(p.di))keep.push(i)});const P2=keep.map(i=>PT[i]),W2=keep.map(i=>WP[i]);PT.length=0;PT.push(...P2);WP.length=0;WP.push(...W2);
- for(let i=JR.length-1;i>=0;i--)if(sm(JR[i].di))JR.splice(i,1);
- const had=D.bn.some(b=>sm(b.di));D.bn.filter(b=>sm(b.di)).forEach(b=>delete WB[b.id]);D.bn=D.bn.filter(b=>!sm(b.di));D.di=D.di.filter(d=>!sm(d.nama));
- if(had){const ks=D.sal.map((l,i)=>(D.salk||[])[i]?i:-1).filter(i=>i>=0);D.salk=ks.map(i=>D.salk[i]);D.saln=ks.map(i=>(D.saln||[])[i]||'');D.salr=ks.map(i=>(D.salr||[])[i]||[]);D.salu=ks.map(i=>(D.salu||[])[i]||'');D.sal=ks.map(i=>D.sal[i])}
- C=C.filter(r=>!sm(r.di));D.sample=false;init(D,C);lrender();say('Data contoh dihapus. Data asli Anda tidak diubah.')}
-$('#rms').onclick=removeSampleOnly;
-const TL={osm:['https://tile.openstreetmap.org/{z}/{x}/{y}.png','© kontributor OpenStreetMap'],sat:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}','Citra © Esri, Maxar, Earthstar Geographics']};
-let BASE='';
-function tilesRefresh(){const g=$('#bg');if(!g)return;const pr=D.proj,at=$('#attr');
- if(!BASE||!pr){g.innerHTML='';if(at)at.textContent=BASE&&!pr?'Peta dasar butuh data berkoordinat (impor KMZ atau JSON survei).':'';return}
- const r=$('#map').getBoundingClientRect(),ppd=pr.k*MZ.k*((r.width||600)/600),z=Math.max(2,Math.min(19,Math.ceil(Math.log2(ppd*360/256))));
- const lo=x=>pr.x0+(x-20)/pr.k,la=y=>pr.y1-(y-20)/pr.k,n=2**z,tx=l=>Math.floor((l+180)/360*n),ty=a=>{const s=Math.sin(a*Math.PI/180);return Math.floor((0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n)};
- const xa=Math.max(0,tx(lo(-MZ.x/MZ.k))),xb=Math.min(n-1,tx(lo((600-MZ.x)/MZ.k))),ya=Math.max(0,ty(la(-MZ.y/MZ.k))),yb=Math.min(n-1,ty(la((420-MZ.y)/MZ.k)));
- if((xb-xa+1)*(yb-ya+1)>60){g.innerHTML='';return}
- const T=TL[BASE][0],lon=x=>x/n*360-180,lat=y=>Math.atan(Math.sinh(Math.PI*(1-2*y/n)))*180/Math.PI;let h='';
- for(let x=xa;x<=xb;x++)for(let y=ya;y<=yb;y++){const a=lon(x),b=lon(x+1),t=lat(y),u=lat(y+1);
-  h+=`<image href="${T.replace('{z}',z).replace('{x}',x).replace('{y}',y)}" x="${20+(a-pr.x0)*pr.k}" y="${20+(pr.y1-t)*pr.k}" width="${(b-a)*pr.k+.2}" height="${(t-u)*pr.k+.2}" preserveAspectRatio="none" opacity=".92"/>`}
- g.innerHTML=h;if(at)at.textContent=TL[BASE][1]}
-try{BASE=localStorage.getItem('pi_base')||''}catch(e){}$('#bgsel').value=BASE;
-$('#bgsel').onchange=e=>{BASE=e.target.value;try{localStorage.setItem('pi_base',BASE)}catch(x){}tilesRefresh()};
-const kx=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const KMS={sp:['ff0000ff',3],ss:['ff00ffff',3],st:['ff7fff00',2],sk:['ffffffff',1.5],sb:['ffff0000',2]};
-const KMI={bendung:'pushpin/ylw-pushpin',bu:'shapes/phone',bt:'shapes/square',bg:'shapes/donut',bbs:'shapes/donut',bs:'shapes/triangle',pl:'shapes/arrow-reverse',gg:'shapes/placemark_square',jb:'shapes/placemark_square',tj:'shapes/placemark_square',tc:'shapes/placemark_square',mh:'shapes/placemark_square',bl:'shapes/placemark_circle'};
-function buildKml(){
- const cs=a=>a.map(c=>(+c[0]).toFixed(7)+','+(+c[1]).toFixed(7)+',0').join(' ');
- const pm=(n,d,s,g)=>`<Placemark><name>${kx(n)}</name><description><![CDATA[${kx(d).replace(/\n/g,'<br>')}]]></description><styleUrl>#${s}</styleUrl>${g}</Placemark>`;
- const st=['<Style id="pt"><PolyStyle><color>5500aa00</color></PolyStyle><LineStyle><color>ff00aa00</color><width>1.5</width></LineStyle></Style>'];
- Object.entries(KMS).forEach(([k,v])=>st.push(`<Style id="s_${k}"><LineStyle><color>${v[0]}</color><width>${v[1]}</width></LineStyle></Style>`));
- Object.entries(KMI).forEach(([k,v])=>st.push(`<Style id="i_${k}"><IconStyle><scale>0.8</scale><Icon><href>http://maps.google.com/mapfiles/kml/${v}.png</href></Icon></IconStyle></Style>`));
- const G={},gd=di=>G[di||'(tanpa DI)']||(G[di||'(tanpa DI)']={bn:[],bg:{},ln:{},pt:[]});let skip=0;
- D.bn.forEach(b=>{if(b.lo==null){skip++;return}const l=last(b),s=stat(b);gd(b.di).bn.push(pm(b.nama,`Bendung\nDebit terakhir: ${l?l.v+' lt/dt ('+l.t+')':'belum ada'}\nKebutuhan: ${b.keb?b.keb+' lt/dt':'-'}\nStatus: ${s[0]}`,'i_bendung',`<Point><coordinates>${b.lo},${b.la},0</coordinates></Point>`))});
- JR.forEach(j=>{if(/^s/.test(j.k)||j.lo==null||!KMI[j.k])return;const o=gd(j.di);(o.bg[j.k]=o.bg[j.k]||[]).push(pm(j.n,`${TY[j.k]}${j.nom?'\nNomenklatur: '+j.nom:''}${j.kd&&j.kd!=='-'?'\nKondisi: '+j.kd:''}`,'i_'+j.k,`<Point><coordinates>${j.lo},${j.la},0</coordinates></Point>`))});
- const sj={};JR.forEach(j=>{if(/^s/.test(j.k))sj[j.k+'|'+j.n]=j});
- (D.salr||[]).forEach((r,i)=>{const k=(D.salk||[])[i],n=(D.saln||[])[i];if(!r||!r.length||!k||!KMS[k])return;const j=sj[k+'|'+n]||{},o=gd(j.di);(o.ln[k]=o.ln[k]||[]).push(pm(n,`${TY[k]}${j.pj?'\nPanjang: '+fm(j.pj):''}`,'s_'+k,`<LineString><tessellate>1</tessellate><coordinates>${cs(r)}</coordinates></LineString>`))});
- const pj={};PT.forEach(p=>pj[p.n]=p);
- D.di.forEach(d=>{if(!d.raw||!d.raw.length)return;const p=d.nolabel?pj[d.nama]:null,l=p?lpr(p):0;gd(p?p.di:d.nama).pt.push(pm(d.nama,p?`Petak tersier\nLuas baku: ${fmt2(p.lb)} ha\nLPR: ${fmt2(l)}\nKebutuhan: ${fmt2(l*KP.fpr)} lt/dt\nDebit terukur: ${p.q>0?p.q+' lt/dt':'-'}`:'Batas daerah irigasi','pt',`<Polygon><outerBoundaryIs><LinearRing><coordinates>${cs(d.raw)}</coordinates></LinearRing></outerBoundaryIs></Polygon>`))});
- const fo=(n,a)=>`<Folder><name>${kx(n)}</name>${a.join('')}</Folder>`;
- const fl=Object.entries(G).sort((a,b)=>a[0].localeCompare(b[0])).map(([di,g])=>fo(di,[...(g.bn.length?[fo('Bendung',g.bn)]:[]),...Object.entries(g.bg).map(([k,a])=>fo(TY[k],a)),...Object.entries(g.ln).map(([k,a])=>fo(TY[k],a)),...(g.pt.length?[fo('Petak tersier',g.pt)]:[])])).join('');
- return{kml:`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${kx(INFO.di||'Irigasi')}</name>${st.join('')}${fl}</Document></kml>`,skip,n:Object.keys(G).length}}
-async function dlFile(name,text,mime){const dl=window.claude&&claude.use?await claude.use('downloads'):null;
- if(!dl){try{const u=URL.createObjectURL(new Blob([text],{type:mime})),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);return true}catch(e){return false}}
- try{await dl.save({filename:name,data:text});return true}catch(e){return false}}
-$('#kx').onclick=async()=>{const r=buildKml();if(!r.n){say('Belum ada data berkoordinat untuk diekspor. Impor peta KMZ lebih dulu.',1);return}
- const ok=await dlFile(`irigasi-${iso(new Date())}.kml`,r.kml,'application/vnd.google-earth.kml+xml');
- say(ok?`KML siap: ${r.n} daerah irigasi.${r.skip?` ${r.skip} bendung tanpa koordinat dilewati.`:''} Buka dengan Google Earth.`:'KML gagal disimpan.',!ok)};
-let JT={},LASTD=null;const JTL={teknis:'Teknis',semi:'Semi teknis',sederhana:'Sederhana'};
-function jenisJar(di){const m=JT[di];if(m&&JTL[m])return{v:m,auto:false};
- const A=JR.filter(j=>j.di===di),bn=D.bn.some(b=>b.di===di);if(!A.length&&!bn)return{v:'',auto:true};
- const bu=A.filter(j=>j.k==='bu').length,bag=A.filter(j=>['bs','bbs','bg','bt'].includes(j.k)).length,pb=A.some(j=>j.k==='sb');
- return{v:bn&&bu>=3&&(bag===0||bu/(bag+bu)>=.2)&&pb?'teknis':bn&&bu>=1?'semi':'sederhana',auto:true}}
-const jtSel=di=>{const j=jenisJar(di);return`<div class="kv"><span>Jenis jaringan DI</span><span><b>${j.v?JTL[j.v]:'Belum diketahui'}</b>${j.auto&&j.v?' <small>(perkiraan)</small>':''}</span></div><label style="margin-top:6px">Tetapkan jenis jaringan DI ${esc(di||'-')}<select data-jt="${esc(di||'')}"><option value="">Otomatis (perkiraan)</option>${Object.entries(JTL).map(([k,v])=>`<option value="${k}"${JT[di]===k?' selected':''}>${v}</option>`).join('')}</select></label><small style="color:var(--mut)">Perkiraan: teknis bila ada bendung, bangunan ukur cukup (minimal 3 atau 20% dari bangunan bagi dan sadap) dan saluran pembuang; semi teknis bila ada bendung dan minimal satu bangunan ukur; selain itu sederhana. Tetapkan manual bila Anda tahu klasifikasi resminya.</small>`};
-const mpd=la=>[111320*Math.cos(la*Math.PI/180),110540];
-function dSeg(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy;let t=l?((px-ax)*dx+(py-ay)*dy)/l:0;t=Math.max(0,Math.min(1,t));return Math.hypot(px-(ax+t*dx),py-(ay+t*dy))}
-function dPtLine(lo,la,line,closed){const[mx,my]=mpd(la);let m=1e9;const n=line.length;for(let i=0;i<n-(closed?0:1);i++){const a=line[i],b=line[(i+1)%n];m=Math.min(m,dSeg(lo*mx,la*my,a[0]*mx,a[1]*my,b[0]*mx,b[1]*my))}return m}
-const nearJR=(line,rad,poly)=>JR.filter(j=>!/^s/.test(j.k)&&j.lo!=null&&((poly&&pip(j.lo,j.la,poly))||dPtLine(j.lo,j.la,line,!!poly)<=rad));
-const lst=(a,n)=>a.slice(0,n).map(esc).join(', ')+(a.length>n?` dan ${a.length-n} lainnya`:'');
-const lnk=(la,lo)=>`<a href="https://www.google.com/maps?q=${la},${lo}" target="_blank" rel="noopener">Google Maps</a> · <a href="https://earth.google.com/web/@${la},${lo},0a,800d,35y,0h,0t,0r" target="_blank" rel="noopener">Google Earth</a>`;
-function chainFrom(st){const byHl={};JR.forEach(j=>{if(/^s/.test(j.k)&&j.hl)byHl[j.hl]=j});const segs=[],seen=new Set();let cur=st;while(cur&&!seen.has(cur)){seen.add(cur);segs.unshift(cur);cur=cur.hu?byHl[cur.hu]:null}return segs}
-const proj=(lo,la)=>{const p=D.proj;return p?[20+(lo-p.x0)*p.k,20+(p.y1-la)*p.k]:null};
-function showD(){if(!dlg.open)dlg.showModal()}
-function sinfo(j){
- let i=j.id?(D.salu||[]).indexOf(j.id):-1;if(i<0)i=(D.salk||[]).findIndex((k,x)=>k===j.k&&(D.saln||[])[x]===j.n);
- const raw=i>=0?(D.salr||[])[i]:null,len=j.pj!=null?j.pj:(raw&&raw.length>1?Math.round(klen(raw)):null);
- const mid=raw&&raw.length?raw[Math.floor(raw.length/2)]:null,co=mid?{lo:mid[0],la:mid[1]}:{lo:j.lo,la:j.la},L=locOf({k:'saluran',n:j.n,o:{lo:co.lo,la:co.la,di:j.di}});
- const nb=[];if(raw&&raw.length>1){nearJR(raw,25).forEach(x=>nb.push(x.n+' ('+(TY[x.k]||'')+')'));D.bn.forEach(b=>{if(b.lo!=null&&dPtLine(b.lo,b.la,raw,false)<=25)nb.push(b.nama+' (Bendung)')})}
- const up=j.hu&&(JR.find(x=>x.id===j.hu)||{}).n,dn=j.hl&&(JR.find(x=>x.id===j.hl)||{}).n,bd=j.hu&&(D.bn.find(b=>b.sid===j.hu)||{}).nama;
- const ch=j.hu?chainFrom(j):null,tot=ch?ch.reduce((s,x)=>s+(x.pj||0),0):0,pf=co.lo!=null?proj(co.lo,co.la):null;
- dlg.innerHTML=`<h2>${esc(j.n)}</h2><span class="badge" style="background:var(--water)">${esc(TY[j.k])}</span>
-<div class="kv"><span>Daerah irigasi</span><span>${esc(j.di||'-')}</span></div><div class="kv"><span>Juru</span><span>${esc(j.w?wl(j.w):'belum dibagi')}</span></div>
-<div class="kv"><span>Panjang</span><span><b>${fm(len)}</b></span></div>
-<div class="kv"><span>Lokasi</span><span>${esc(L.desa||'desa belum diketahui')}, kec. ${esc(L.kec||'belum diketahui')}</span></div>
-${co.lo!=null?`<div class="kv"><span>Titik tengah</span><span>${co.la.toFixed(5)}, ${co.lo.toFixed(5)}<br>${lnk(co.la,co.lo)}</span></div>`:''}
-${j.pn?`<div class="kv"><span>Pintu</span><span>${j.pn} buah</span></div>`:''}${j.q!=null?`<div class="kv"><span>Debit rencana (Q)</span><span>${j.q} lt/dt</span></div>`:''}${j.ls!=null?`<div class="kv"><span>Luas layanan</span><span>${j.ls} ha</span></div>`:''}${j.th?`<div class="kv"><span>Tahun dibangun</span><span>${esc(j.th)}</span></div>`:''}
-${up||bd?`<div class="kv"><span>Hulu (bangunan)</span><span>${esc(up||bd)}</span></div>`:''}${dn?`<div class="kv"><span>Hilir (bangunan)</span><span>${esc(dn)}</span></div>`:''}
-<div class="kv"><span>Bangunan di sepanjang jalur</span><span>${nb.length?lst(nb,14):(raw?'tidak ada yang tercatat dalam jarak 25 m':'belum ada data koordinat')}</span></div>
-${ch&&ch.length>1?`<div class="kv"><span>Dari titik hulu</span><span>${fm(tot)} (${ch.length} ruas)</span></div>`:''}
-${jtSel(j.di)}
-${pf?`<button class="btn" data-fly="${pf[0].toFixed(1)},${pf[1].toFixed(1)}" style="width:100%;margin-top:10px">Lihat di peta</button>`:''}<form method="dialog" style="grid-template-columns:1fr"><button>Tutup</button></form>`;
- LASTD=()=>sinfo(j);showD()}
-function pinfo(i){const p=PT[i];if(!p)return;
- const dpi=D.di.findIndex(d=>d.nolabel&&d.nama===p.n),dd=dpi>=0?D.di[dpi]:null,raw=dd&&dd.raw&&dd.raw.length>2?dd.raw:null,L=locOf({k:'petak',n:p.n,o:p});
- const ln=new Map();if(raw)(D.salr||[]).forEach((r,k)=>{const t=(D.salk||[])[k];if(!r||!/^s[tk]$/.test(t)||!r.some(c=>pip(c[0],c[1],raw)))return;const u=(D.salu||[])[k],j=(u&&JR.find(x=>x.id===u))||{n:(D.saln||[])[k],pj:Math.round(klen(r)),k:t};ln.set(u||('n'+k),j)});
- const cd=cdOf(p.nom);if(cd)JR.forEach(j=>{if(j.k==='st'&&cdOf(j.nom)===cd&&!ln.has(j.id))ln.set(j.id,j)});
- const lines=[...ln.values()],lt=lines.reduce((s,j)=>s+(j.pj||0),0),nb=raw?nearJR(raw,25,raw).map(x=>x.n+' ('+(TY[x.k]||'')+')'):[];
- const st=cd&&JR.find(j=>j.k==='st'&&cdOf(j.nom)===cd),ch=st&&st.hu?chainFrom(st):null,tot=ch?ch.reduce((s,x)=>s+(x.pj||0),0):0;
- const cen=dd?dd.pts.reduce((a,q)=>[a[0]+q[0]/dd.pts.length,a[1]+q[1]/dd.pts.length],[0,0]):null,tn=p.sem+p.olah+p.tumb+p.pal+p.tm+p.tt;
- dlg.innerHTML=`<h2>Petak ${esc(p.n)}</h2><span class="badge" style="background:var(--paddy);color:#10250f">Petak tersier</span>
-<div class="kv"><span>Daerah irigasi</span><span>${esc(p.di||'-')}</span></div><div class="kv"><span>Juru</span><span>${esc(WP[i]?wl(WP[i]):'belum dibagi')}</span></div>
-<div class="kv"><span>Luas baku</span><span>${fmt2(p.lb)} ha (luas tanam ${fmt2(tn)} ha)</span></div>
-<div class="kv"><span>Lokasi</span><span>${esc(L.desa||'desa belum diketahui')}, kec. ${esc(L.kec||'belum diketahui')}</span></div>
-${L.lo!=null?`<div class="kv"><span>Titik tengah</span><span>${L.la.toFixed(5)}, ${L.lo.toFixed(5)}<br>${lnk(L.la,L.lo)}</span></div>`:''}
-<div class="kv"><span>Saluran di petak</span><span>${lines.length?`${lines.length} ruas, <b>${fm(lt)}</b><br><small>${lst(lines.map(j=>j.n+' ('+(TY[j.k]||'')+')'),6)}</small>`:(raw?'tidak ada saluran tersier yang tercatat':'belum ada data peta petak')}</span></div>
-<div class="kv"><span>Bangunan di petak</span><span>${nb.length?lst(nb,14):(raw?'tidak ada yang tercatat':'belum ada data peta petak')}</span></div>
-${ch&&ch.length?`<div class="kv"><span>Panjang dari titik hulu</span><span>${fm(tot)} (${ch.length} ruas)</span></div>`:''}
-<div class="kv"><span>Debit terukur</span><span>${p.q>0?KMD(p.q):'belum ada data'}</span></div>
-${jtSel(p.di)}
-<button class="btn" data-lpr="${i}" style="width:100%;margin-top:10px">Hitung LPR dan FPR petak ini</button>${cen?`<button class="btn" data-fly="${cen[0].toFixed(1)},${cen[1].toFixed(1)}" style="width:100%;margin-top:6px">Lihat di peta</button>`:''}<form method="dialog" style="grid-template-columns:1fr"><button>Tutup</button></form>`;
- LASTD=()=>pinfo(i);showD()}
-dlg.addEventListener('click',e=>{const a=e.target.closest('[data-lpr]');if(a){dlg.close();show('lpr');det(+a.dataset.lpr)}});
-dlg.addEventListener('change',e=>{const s=e.target.closest('[data-jt]');if(!s)return;const di=s.dataset.jt;if(s.value)JT[di]=s.value;else delete JT[di];if(LASTD)LASTD()});
-let CDI=null;const dkey=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,''),cdi=s=>{const k=dkey(s);if(CDI&&CDI.has(k))return CDI.get(k);const v=tc(s);if(CDI)CDI.set(k,v);return v};
-const hav=(a,b)=>{const R=6371008.8,r=Math.PI/180,dl=(b[1]-a[1])*r,dn=(b[0]-a[0])*r,x=Math.sin(dl/2)**2+Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(x))};
-const measLen=()=>MEAS.p.reduce((s,q,i)=>i?s+hav(MEAS.p[i-1],q):0,0);
-function measHud(note){const h=$('#mhud');if(!MEAS.on&&!MEAS.p.length){h.hidden=true;return}h.hidden=false;
- if(!D.proj){h.innerHTML='Ukur jarak butuh peta berkoordinat. Impor KMZ atau JSON survei lebih dulu.';return}
- const n=MEAS.p.length,seg=n>1?hav(MEAS.p[n-2],MEAS.p[n-1]):0;
- h.innerHTML=`<b>Ukur jarak</b>${MEAS.on?' (klik titik-titik pada peta)':''}<br>${n?`Total: <b>${fm(Math.round(measLen()))}</b> dari ${n} titik${n>1?`, segmen terakhir ${fm(Math.round(seg))}`:''}`:'Belum ada titik.'}${note?`<br><small>${esc(note)}</small>`:''}<br><button data-ma="undo">Urungkan</button><button data-ma="clear">Hapus</button><button data-ma="kml">Simpan KML</button><button data-ma="done">${MEAS.on?'Selesai':'Ukur lagi'}</button>`}
-function measToggle(){MEAS.on=!MEAS.on;$('#map').classList.toggle('meas',MEAS.on);const b=document.querySelector('.mz [data-zm="m"]');if(b)b.classList.toggle('on',MEAS.on);measHud()}
-function measAdd(cx,cy){const m=$('#map'),pr=D.proj;if(!pr)return;let ux=300,uy=210;try{const p=m.createSVGPoint();p.x=cx;p.y=cy;const q=p.matrixTransform(m.getScreenCTM().inverse());ux=q.x;uy=q.y}catch(e){}
- const X=(ux-MZ.x)/MZ.k,Y=(uy-MZ.y)/MZ.k;MEAS.p.push([pr.x0+(X-20)/pr.k,pr.y1-(Y-20)/pr.k]);measHud();measDraw()}
-function measDraw(){const mv=$('#mvp');if(!mv)return;let g=$('#mg');if(!g){g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('id','mg');mv.appendChild(g)}
- const pr=D.proj;if(!pr||!MEAS.p.length){g.innerHTML='';return}const q=MEAS.p.map(c=>[20+(c[0]-pr.x0)*pr.k,20+(pr.y1-c[1])*pr.k]);
- g.innerHTML=`<polyline points="${q.map(a=>a.join(',')).join(' ')}" fill="none" stroke="#ff3b81" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>`+q.map((a,i)=>`<g transform="translate(${a[0]} ${a[1]})"><circle class="sz" r="4" fill="#fff" stroke="#ff3b81" stroke-width="2"/>${i&&i===q.length-1?`<g class="sz"><text y="-9" text-anchor="middle" font-size="10" font-weight="600" fill="var(--ink)" stroke="var(--bg)" stroke-width="3" paint-order="stroke">${fm(Math.round(measLen()))}</text></g>`:''}</g>`).join('')}
-$('#mhud').addEventListener('click',async e=>{const a=e.target.closest('[data-ma]');if(!a)return;const t=a.dataset.ma;
- if(t==='undo'){MEAS.p.pop();measHud();measDraw()}else if(t==='clear'){MEAS.p=[];if(MEAS.on)measToggle();else measHud();measDraw()}
- else if(t==='done'){measToggle()}
- else if(t==='kml'){if(MEAS.p.length<2)return measHud('Tambahkan minimal dua titik.');const L=fm(Math.round(measLen())),k=`<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><Placemark><name>Ukur jarak ${kx(L)}</name><description>Panjang: ${kx(L)}</description><Style><LineStyle><color>ff813bff</color><width>3</width></LineStyle></Style><LineString><tessellate>1</tessellate><coordinates>${MEAS.p.map(c=>c[0].toFixed(7)+','+c[1].toFixed(7)+',0').join(' ')}</coordinates></LineString></Placemark></Document></kml>`;
-  const ok=await dlFile(`ukur-jarak-${iso(new Date())}.kml`,k,'application/vnd.google-earth.kml+xml');measHud(ok?'KML disimpan, buka di Google Earth.':'KML gagal disimpan.')}});
+function tab(){
+  const d=st.d,t=d.tanam,el=$('#tb');
+  if(st.tab=='skm')return skm(el);
+  if(st.tab=='deb'){
+    el.innerHTML='<div class="wrap"><table><thead><tr><th>Tempat ukur</th><th>Q (lt/dt)</th><th>Tinggi (cm)</th><th>Kond.</th></tr></thead><tbody>'+d.debit.map(x=>`<tr><td>${esc(x.n)}</td><td>${n1(x.q)}</td><td>${n1(x.h)}</td><td>${esc(x.kond||'-')}</td></tr>`).join('')+'</tbody></table></div><p class="note">Debit adalah rata-rata pengukuran tanggal '+esc(DB.periode)+'.</p>';
+  }else if(st.tab=='bgn'){
+    el.innerHTML=d.bangunan.map((b,i)=>`<button class="row" data-i="${i}"><b>${esc(b[0]||'Bangunan '+(i+1))}</b><em>›</em><span>${b[1]}, ${b[2]}</span><span></span></button>`).join('');
+    el.querySelectorAll('.row').forEach(r=>r.onclick=()=>{const b=d.bangunan[r.dataset.i];map.flyTo([b[1],b[2]],18);scrollTo({top:0,behavior:'smooth'})});
+  }else{
+    const bk=baku(d),rows=t?[['Padi',t.padi,'#a3e635'],['Tebu',t.tebu,'#22d3ee'],['Palawija',t.palawija,'#fbbf24'],['Bero',t.bero,'#fb7185'],['Habis panen',t.panen,'#c4b5fd']]:[];
+    el.innerHTML='<div class="cards"><div class="card"><span>Baku sawah</span><b>'+n1(bk,0)+' <small>ha</small></b></div><div class="card"><span>Panjang saluran</span><b>'+n1(d.panjangKm,2)+' <small>km</small></b></div><div class="card"><span>Bangunan</span><b>'+d.bangunan.length+'</b></div></div>'+edform(d,bk)+
+    (t?'<h2>Tanaman periode '+esc(DB.periode)+'</h2>'+rows.map(r=>`<div class="bar"><span>${r[0]}</span><div><i style="width:${Math.min(100,bk?r[1]/bk*100:0)}%;background:${r[2]}"></i></div><b>${n1(r[1])} ha</b></div>`).join('')+(t.persiapan?`<p class="note">Persiapan padi (pembibitan dan garap tanah): ${n1(t.persiapan)} ha.</p>`:''):'<p class="note">Data tanaman untuk DI ini belum terbaca dari Excel.</p>')+
+    (t&&Math.abs(t.baku-d.bakuKmz)/Math.max(t.baku,1)>.15?`<p class="note">Luas baku Excel ${n1(t.baku,0)} ha dan poligon peta ${n1(d.bakuKmz,0)} ha berbeda jauh. Yang dipakai adalah nilai terbesar, kecuali sudah diubah.</p>`:'');
+    edbind(d);
+  }
+}
+/*P*/
+const nz=x=>{const v=parseFloat(x);return isFinite(v)?v:0},
+norm=s=>String(s).toLowerCase().replace(/\b(di|sbr|sumber|ters|desa)\b\.?/g,' ').replace(/\(.*?\)/g,' ').replace(/\b(19|20)\d\d\b/g,' ').replace(/\b(ok|sip|fix|fixs|top)\b/g,' ').replace(/[^a-z0-9]/g,''),
+bk=n=>norm(n)+(/\b(sbr|sumber)\b/i.test(n)?'~s':''),
+rv=r=>{const v=Array.from({length:30},(_,i)=>nz(r[i])),sm=(a,b)=>v.slice(a,b).reduce((x,y)=>x+y,0);return{baku:v[2],padi:v[5]+v[8]+v[11]+v[14]+v[17],persiapan:[3,4,6,7,9,10,12,13,15,16].reduce((x,i)=>x+v[i],0),tebu:sm(18,21),palawija:sm(21,24),total:v[24],bero:v[25],panen:v[26]}},
+blocks=rows=>{const T={};let b=null;for(const r of rows){const s=r[1]?String(r[1]).trim():'';if(/^DI/i.test(s)){b=bk(s.replace(/^DI\.?\s*/i,''));T[b]={own:nz(r[2])>0?rv(r):null,ch:[]}}else if(b&&s&&nz(r[2])>0&&!/^(JURU|UPTD|JUMLAH|TOTAL)/i.test(s)){const v=rv(r);v.n=s.toLowerCase();v.o=s;T[b].ch.push(v)}}return T},
+pick=(T,ks)=>{for(const k of ks){const t=T[k];if(!t)continue;if(t.own)return t.own;let ch=t.ch;if(!ch.length)continue;const te=ch.filter(c=>c.n.startsWith('ters'));if(te.length)ch=te;const o={};for(const f in ch[0])if(f!='n'&&f!='o')o[f]=ch.reduce((s,c)=>s+c[f],0);return o}return null},
+tersOf=(T,ks)=>{for(const k of ks){const t=T[k];if(!t)continue;const r=t.ch.filter(c=>c.n.startsWith('ters')).slice(0,60).map(c=>({n:c.o,baku:+c.baku.toFixed(2),padi:+c.padi.toFixed(2),tebu:+c.tebu.toFixed(2),palawija:+c.palawija.toFixed(2),bero:+c.bero.toFixed(2),panen:+c.panen.toFixed(2)}));if(r.length)return r}return[]},
+deb=rows=>{const D={},ex=['JURU PENGAIRAN','UPTD','PURWOSARI'];let cd=null,nm=null,ty,le,ko;rows.forEach((r,i)=>{const c=r[1]?String(r[1]):'';if(c&&c===c.toUpperCase()&&/[A-Z]/.test(c)&&!ex.includes(c))cd=norm(c);if(r[2]&&String(r[2]).trim()){nm=String(r[2]).trim();ty=r[4];le=r[5];ko=r[6]}
+ if(r[8]=='Q->'&&cd&&nm&&i>0&&rows[i-1][8]=='H->'){const q=r.slice(9,19).filter(x=>typeof x=='number'),h=rows[i-1].slice(9,19).filter(x=>typeof x=='number'),a=x=>x.reduce((s,y)=>s+y,0)/x.length;if(q.length&&nm!='Limpasan')(D[cd]=D[cd]||{})[nm]={n:nm,q:+a(q).toFixed(1),h:h.length?+a(h).toFixed(1):0,tipe:ty,lebar:le,kond:ko}}});return D};
+/*E*/
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const applyUp=()=>{if(!UP)return;DB.periode=UP.periode;DB.di.forEach(d=>{if(UP.t[d.nama])d.tanam=UP.t[d.nama];if(UP.q[d.nama])d.debit=UP.q[d.nama];if(UP.s&&UP.s[d.nama])d.ters=UP.s[d.nama]})};
+function edform(d,bk){return '<form class="ed" id="ed"><label>Luas baku (ha)<input type="number" step="0.1" min="0" id="bk" value="'+(+bk).toFixed(1)+'"></label><button class="btn p">Simpan</button>'+(OV[d.nama]!=null?'<button type="button" class="btn" id="rs">Kembalikan</button>':'')+'</form><p class="note">Perubahan luas baku tersimpan di perangkat ini.</p>'}
+function edbind(d){$('#ed').onsubmit=e=>{e.preventDefault();const v=parseFloat($('#bk').value);if(v>=0){OV[d.nama]=v;save('ov',OV);tab()}};const r=$('#rs');if(r)r.onclick=()=>{delete OV[d.nama];save('ov',OV);tab()}}
+function xl(){
+  const h=document.createElement('section');h.className='imp';
+  h.innerHTML='<h2>Perbarui data tanaman</h2><p class="lead">Pilih file Excel laporan tanaman dan debit dengan format yang sama (sheet 5, 5a, dan 06). Hasilnya langsung tampil di perangkat ini.</p><input type="file" id="xf" accept=".xlsx,.xlsm" aria-label="File Excel"><p class="note" id="xs"></p><div class="act"><button class="btn p" id="dl">Unduh data.json untuk dibagikan</button>'+(UP?'<button class="btn" id="rx">Hapus pembaruan di perangkat ini</button>':'')+'</div><p class="note">Agar semua juru melihat data yang sama, unggah data.json hasil unduhan ke repo GitHub menggantikan yang lama.</p>';
+  app.appendChild(h);
+  $('#xs').textContent=MSG||(UP?'Pembaruan aktif di perangkat ini, periode '+UP.periode+'.':'Periode data saat ini: '+DB.periode+'.');
+  $('#xf').onchange=imp;$('#dl').onclick=dl;const r=$('#rx');if(r)r.onclick=()=>{try{localStorage.removeItem('up')}catch(e){}location.reload()};
+}
+function dl(){DB.di.forEach(d=>{if(OV[d.nama]!=null)d.bakuEdit=OV[d.nama]});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(DB)],{type:'application/json'}));a.download='data.json';a.click()}
+async function imp(e){
+  const f=e.target.files[0];if(!f)return;$('#xs').textContent='Membaca file…';
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array'}),g=re=>{const n=wb.SheetNames.find(x=>re.test(x.trim().toLowerCase()));return n?XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:null}):null},
+    r5=g(/^5\s*-/),r5a=g(/^5a\b/)||[],r6=g(/^0?6\b/);
+    if(!r5||!r6)throw new Error('sheet 5 atau 06 tidak ditemukan');
+    const T5=blocks(r5),T5a=blocks(r5a),Q=deb(r6),t={},q={},sm={},miss=[];
+    DB.di.forEach(d=>{const x=pick(T5,d.xk||[])||pick(T5a,d.xk||[]);x?t[d.nama]=x:miss.push(d.nama);const dq=Q[d.dk];if(dq)q[d.nama]=Object.values(dq);const ts=tersOf(T5a,d.xk||[]);if(ts.length)sm[d.nama]=ts});
+    let per=DB.periode;for(const r of r5.slice(0,10))for(const c of r)if(typeof c=='string'&&/PERIODE/i.test(c))per=c.replace(/^\s*PERIODE\s*(Tanggal)?\s*/i,'').replace(/\s+/g,' ').trim();
+    UP={periode:per,t,q,s:sm};save('up',UP);applyUp();
+    MSG='Selesai: '+Object.keys(t).length+' DI diperbarui, periode '+per+'.'+(miss.length?' Tidak ditemukan di Excel: '+miss.join(', ')+'.':'');
+  }catch(err){MSG='Gagal membaca file: '+err.message}
+  route();
+}
+
+const SK={},nk=s=>String(s).toLowerCase().replace(/^ters\.?\s*/,'').replace(/[^a-z0-9]/g,'');
+const sub=(a,b)=>{let j=0;b=b.toLowerCase();for(const c of a.toLowerCase()){j=b.indexOf(c,j);if(j<0)return false;j++}return true};
+function bFind(d,s){
+  s=String(s).trim();let m;
+  if(m=s.match(/^B+\.?\s*([A-Z]{1,4})\.?\s*(\d+)/i)){const rx=new RegExp('(^|[^a-z])'+m[1]+'\\s*\\.?\\s*'+m[2]+'(?!\\d)','i');return d.bangunan.find(b=>rx.test(b[0]))}
+  if(m=s.match(/^Bendung\/?\s*(.+)/i)){const rx=new RegExp('Bd\\.?\\s*'+m[1].trim().replace(/[^a-z0-9 ]/ig,'.?'),'i');return d.bangunan.find(b=>rx.test(b[0]))}
+  if(m=s.match(/^(.+?)\s+(\d+)\s*(ki|ka|tg)\b/i))return d.bangunan.find(b=>{const q=b[0].match(/^\d*\s*([A-Za-z]{1,4})\.?\s*(\d+)\s*(ki|ka|tg)$/i);return q&&q[2]==m[2]&&q[3].toLowerCase()==m[3].toLowerCase()&&sub(q[1],m[1])})
+}
+async function skm(el){
+  const d=st.d;el.innerHTML='<p class="note">Memuat skema…</p>';
+  try{if(!SK[d.id]){const r=await fetch('skema/'+d.id+'.json');if(!r.ok)throw 0;SK[d.id]=await r.json()}}catch(e){el.innerHTML='<p class="lead">Skema belum tersedia. Pastikan folder skema ada di repo.</p>';return}
+  if(st.tab!='skm'||st.d!==d)return;
+  const S=SK[d.id],tm={},dm={},col={p:'#ff5d5d',s:'#ffb454',t:'#2ee6c8',b:'#a3e635',x:'#6f84a8'},hot={};
+  d.ters.forEach(t=>tm[nk(t.n)]=t);d.debit.forEach(x=>dm[nk(x.n)]=x);
+  let h='<div class="leg"><span><i style="background:#ff5d5d"></i>Primer</span><span><i style="background:#ffb454"></i>Sekunder</span><span><i style="background:#2ee6c8"></i>Tersier</span><span><i style="background:#fbbf24"></i>Petak</span><span><i style="background:#a3e635"></i>Bangunan/bendung</span></div>'+
+  `<div class="skw"><svg id="sk" viewBox="0 0 ${S.w} ${S.h}" role="img" aria-label="Skema jaringan irigasi">`;
+  for(const c in S.P)h+=`<path d="${S.P[c]}" fill="none" stroke="${col[c]}" stroke-width="${c=='x'?1:2}" vector-effect="non-scaling-stroke"/>`;
+  S.C.forEach(c=>h+=`<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" fill="none" stroke="${col[c[3]]||col.x}" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`);
+  S.T.forEach((t,i)=>{
+    const [x,y,hh,rot,tx,att]=t,L=tx.split('\n'),k=nk(L[0]),fs=hh*.95,
+    ty=k in tm?'t':/^B+\.?\s*[A-Z]{1,4}\.?\s*\d+/i.test(L[0])?'n':/^Bendung/i.test(L[0])?'d':k in dm?'q':'',
+    anc=[1,4,7].includes(att)?'start':[3,6,9].includes(att)?'end':'middle',dy=att<=3?fs*.85:att<=6?fs*.35:0,
+    w=Math.max(...L.map(l=>l.length))*fs*.55,bx=anc=='start'?x:anc=='end'?x-w:x-w/2,ry=att<=3?y:att<=6?y-fs*.5:y-fs;
+    if(ty){hot[i]=ty;h+=`<rect x="${bx-1}" y="${ry-1}" width="${w+2}" height="${fs*1.2*L.length+2}" fill="transparent" data-i="${i}" style="cursor:pointer"/>`}
+    h+=`<text x="${x}" y="${y+dy}" font-size="${fs}" text-anchor="${anc}" fill="${ty=='t'?'#fbbf24':ty?'#a3e635':'#e8eef7'}" transform="rotate(${-rot} ${x} ${y})" style="pointer-events:none">`+L.map((l,j)=>`<tspan x="${x}" dy="${j?fs*1.15:0}">${esc(l)}</tspan>`).join('')+'</text>';
+  });
+  el.innerHTML=h+'</svg></div><div id="pc" class="note">Ketuk huruf berwarna (petak, bangunan bagi, bendung) untuk melihat datanya. Geser dan cubit untuk memperbesar, ketuk dua kali untuk mengembalikan.</div>';
+  const svg=$('#sk'),mvr=panzoom(svg,S);
+  svg.addEventListener('click',e=>{const i=e.target.dataset&&e.target.dataset.i;if(i!=null&&!mvr())skInfo(S,+i,tm,dm)});
+}
+function skInfo(S,i,tm,dm){
+  const d=st.d,t=S.T[i],L=t[4].split('\n'),k=nk(L[0]),p=$('#pc'),dist=u=>Math.hypot(u[0]-t[0],u[1]-t[1]);
+  const near=S.T.filter(u=>u!==t&&Math.abs(u[0]-t[0])<70&&Math.abs(u[1]-t[1])<35).sort((a,b)=>dist(a)-dist(b)),
+  ha=near.find(u=>/\bha\b/i.test(u[4])),q=near.find(u=>/l\/det|liter/i.test(u[4])),tr=tm[k],db=dm[k]||(tr&&dm[nk(tr.n)]),b=bFind(d,t[4].replace(/\n/g,' '));
+  let h=`<h2 style="margin-top:6px">${esc(L[0])}</h2>`;
+  if(ha||q)h+=`<p class="note">Rencana di skema: ${ha?esc(ha[4].split('\n')[0]):'-'} · ${q?esc(q[4].split('\n')[0]):'-'}</p>`;
+  if(tr)h+='<div class="cards">'+[['Baku',tr.baku],['Padi',tr.padi],['Tebu',tr.tebu],['Palawija',tr.palawija],['Bero',tr.bero],['Habis panen',tr.panen]].map(a=>`<div class="card"><span>${a[0]}</span><b>${n1(a[1])} <small>ha</small></b></div>`).join('')+'</div>';
+  if(db)h+=`<p class="note">Debit terukur (${esc(db.n)}): <b>${n1(db.q)} lt/dt</b>, tinggi air ${n1(db.h)} cm.</p>`;
+  if(!tr&&!db)h+='<p class="note">Belum ada data Excel yang cocok dengan label ini.</p>';
+  p.innerHTML=h+(b?'<div class="act"><button class="btn p" id="gm">Lihat di peta</button></div>':'');
+  if(b)$('#gm').onclick=()=>{map.flyTo([b[1],b[2]],18);scrollTo({top:0,behavior:'smooth'})};
+}
+function panzoom(svg,S){
+  let vb=[0,0,S.w,S.h],pts=new Map(),pd=0,mv=0;const set=()=>svg.setAttribute('viewBox',vb.join(' ')),
+  g=e=>{const r=svg.getBoundingClientRect(),sc=Math.max(vb[2]/r.width,vb[3]/r.height);return{sc,x:vb[0]+(e.clientX-r.left-(r.width-vb[2]/sc)/2)*sc,y:vb[1]+(e.clientY-r.top-(r.height-vb[3]/sc)/2)*sc}},
+  zoom=(f,e)=>{const a=g(e),nw=Math.min(S.w*1.3,Math.max(S.w/40,vb[2]*f)),k=nw/vb[2];vb=[a.x-(a.x-vb[0])*k,a.y-(a.y-vb[1])*k,nw,vb[3]*k];set()};
+  svg.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY>0?1.2:1/1.2,e)},{passive:false});
+  svg.onpointerdown=e=>{pts.set(e.pointerId,[e.clientX,e.clientY]);mv=0;pd=0};
+  svg.onpointermove=e=>{if(!pts.has(e.pointerId))return;const o=pts.get(e.pointerId),n=[e.clientX,e.clientY];pts.set(e.pointerId,n);
+    if(pts.size==1){const a=g(e);vb[0]-=(n[0]-o[0])*a.sc;vb[1]-=(n[1]-o[1])*a.sc;mv+=Math.abs(n[0]-o[0])+Math.abs(n[1]-o[1]);set()}
+    else if(pts.size==2){const[p,q]=[...pts.values()],dd=Math.hypot(p[0]-q[0],p[1]-q[1]);if(pd)zoom(pd/dd,{clientX:(p[0]+q[0])/2,clientY:(p[1]+q[1])/2});pd=dd;mv=99}};
+  svg.onpointerup=svg.onpointercancel=e=>{pts.delete(e.pointerId);pd=0};
+  svg.ondblclick=()=>{vb=[0,0,S.w,S.h];set()};
+  return()=>mv>6;
+}
+
 </script>
-<script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script></body></html>
+</body>
+</html>
