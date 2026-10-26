@@ -24,6 +24,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   });
   const w = dom.window, d = w.document;
   w.scrollTo = () => {};
+  w.HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
+  w.HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
   await new Promise(r => (d.readyState === 'complete' ? r() : w.addEventListener('load', r)));
   await sleep(150);
 
@@ -78,6 +80,22 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   assert(d.querySelector('#mvp'), 'Peta punya lapisan zoom');
   w.eval('zoomTo(300,200,10)');
   assert.strictEqual(d.querySelector('#map').getAttribute('data-z'), '2', 'Zoom dekat menampilkan semua label');
+  // Klik jalur dan petak: panjang, lokasi, bangunan, jenis jaringan
+  d.querySelector('#map polyline[data-s]').dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+  const ds = d.querySelector('#dlg').textContent;
+  assert(/Panjang/.test(ds) && /Lokasi/.test(ds) && /Bangunan di sepanjang jalur/.test(ds) && /Jenis jaringan DI/.test(ds), 'Klik jalur menampilkan info lengkap');
+  const pg = [...d.querySelectorAll('#map polygon[data-pi]')].find(x => w.eval(`D.di[${x.dataset.pi}].nolabel`));
+  pg.dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+  assert(/Saluran di petak/.test(d.querySelector('#dlg').textContent) && /Bangunan di petak/.test(d.querySelector('#dlg').textContent), 'Klik petak menampilkan info lengkap');
+  const jt = d.querySelector('#dlg [data-jt]'); jt.value = 'teknis'; jt.dispatchEvent(new w.Event('change', { bubbles: true }));
+  assert(/Teknis/.test(d.querySelector('#dlg').textContent) && !/Teknis\s*\(perkiraan\)/.test(d.querySelector('#dlg').textContent), 'Jenis jaringan manual');
+
+  // Ekspor KML (Google Earth) dan peta dasar
+  const kmlOut = w.eval('buildKml()');
+  assert(new w.DOMParser().parseFromString(kmlOut.kml, 'text/xml').getElementsByTagName('Placemark').length >= 5, 'Ekspor KML berisi penanda');
+  d.querySelector('#bgsel').value = 'osm'; d.querySelector('#bgsel').dispatchEvent(new w.Event('change'));
+  assert(d.querySelectorAll('#bg image').length > 0, 'Peta dasar memuat ubin');
+  d.querySelector('#bgsel').value = ''; d.querySelector('#bgsel').dispatchEvent(new w.Event('change'));
 
   // 2) Excel (formulir sederhana)
   const buf = fs.readFileSync(path.join(root, 'data/contoh/laporan-tanaman-contoh.xlsx'));

@@ -9,6 +9,7 @@ Aplikasi **mulai kosong**. Data contoh bisa dimuat dari tab Data (hanya untuk me
 - **Ringkasan**: jumlah bendung, petak, bangunan dan saluran, kondisi air, daftar bendung yang perlu perhatian.
 - **Peta interaktif**: zoom (roda mouse, cubit di HP, tombol + dan -), geser, klik bendung, bangunan, saluran, atau petak untuk melihat detailnya. Label dan simbol kecil baru muncul saat diperbesar agar peta tidak penuh.
 - **Peta** dengan simbol sesuai legenda irigasi (bendung, bang. sadap, bagi, bagi sadap, box tersier, alat ukur, gorong-gorong, terjunan, pelimpah, jembatan, dan lainnya), saluran pembawa dan pembuang, batas daerah irigasi, petak tersier berpola sawah dengan label (nama, luas baku, luas tanam).
+- **Klik jalur dan petak**: klik garis saluran untuk panjang (km dan m), lokasi (desa, kecamatan, koordinat, tautan Google Maps dan Earth), bangunan di sepanjang jalur, pintu, hulu dan hilir, serta panjang dari titik hulu. Klik petak tersier untuk luas, lokasi, saluran dan bangunan di dalamnya, serta tombol ke hitungan LPR dan FPR. Jenis jaringan (teknis, semi teknis, sederhana) ditetapkan per daerah irigasi.
 - **Debit**: catat debit (lt/dt) per bendung, grafik 14 hari, status cukup, waspada, kritis.
 - **Tanaman**: laporan luas tanam per daerah irigasi dan musim (padi, jagung, palawija, tebu, lainnya).
 - **LPR dan FPR** per petak tersier, dengan pencarian, filter, dan detail petak.
@@ -59,6 +60,14 @@ Catatan: GitHub Pages dari repositori *private* umumnya hanya tersedia di paket 
 ### B. Vercel, Netlify, atau Cloudflare Pages
 
 Hubungkan repositori, **tanpa perintah build** dan **direktori output `/`** (situs statis). Cocok bila repositori ingin dibuat private.
+
+## Google Earth dan Google Maps
+
+- **Peta dasar** (tab Peta, pilihan *Peta dasar*): citra satelit (Esri) atau peta jalan (OpenStreetMap) diletakkan tepat di bawah peta aplikasi dan ikut ter-zoom. Butuh internet dan data berkoordinat dari KMZ atau JSON survei. Tersedia di versi yang dipasang di web sendiri (GitHub Pages dan sejenisnya). Tampilan di dalam claude.ai memblokir gambar dari luar, jadi tidak muncul di sana.
+- **Ke Google Earth**: tab Data, *Ekspor peta ke Google Earth (KML)*. Hasilnya per daerah irigasi (bendung, bangunan, saluran, petak) lengkap dengan keterangan debit dan kebutuhan. Buka di Google Earth Pro atau web, atau impor ke Google My Maps.
+- **Dari Google Earth**: simpan sebagai KMZ lalu impor di Setelan (alur digitasi di Google Earth lalu masuk aplikasi sudah didukung).
+- **Tautan** *Google Maps* dan *Google Earth* tersedia pada detail bendung, bangunan, dan hasil pencarian letak.
+- Google Maps tidak dipakai sebagai peta dasar langsung karena ketentuan Google mewajibkan Maps JavaScript API dengan kunci API dan penagihan. Esri dan OpenStreetMap punya ketentuan penggunaan sendiri (atribusi tampil di bawah peta). Untuk pemakaian berat atau resmi, periksa ketentuannya atau gunakan kunci API sendiri.
 
 ## Memasang di HP
 

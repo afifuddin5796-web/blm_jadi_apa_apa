@@ -56,3 +56,17 @@ Ada tiga sumber, dipakai berurutan:
 
 ## 9. Keterkaitan jaringan (untuk panjang jalur hulu ke petak atau bangunan)
 Dari JSON survei aset: saluran memuat `norec_hulu_sync` dan `norec_hilir_sync` (bangunan di ujung hulu dan hilir). Aplikasi menelusuri saluran ke hulu sampai titik awal dan menjumlahkan panjangnya. Petak dihubungkan ke saluran tersier lewat kode nomenklatur yang sama (misalnya `PT B.KG 2Ka` dan `ST B.KG 2Ka`). Jalur tidak bisa dihitung untuk data yang berasal dari Excel saja.
+
+## 10. Koordinat asli dan proyeksi peta
+Saat impor KMZ atau JSON survei, aplikasi menyimpan koordinat asli (bujur, lintang) semua titik, garis, dan poligon (`lo`, `la`, `salr`, `raw`) serta parameter proyeksi (`D.proj`). Ini dipakai untuk peta dasar, ekspor KML, dan tautan Google Maps atau Earth. Cadangan JSON lama (sebelum versi ini) tidak memuatnya, jadi impor ulang KMZ bila peta dasar atau ekspor KML kosong.
+
+## 11. Jenis jaringan: teknis, semi teknis, sederhana
+Data survei dan laporan tidak memuat klasifikasi ini, jadi aplikasi **memperkirakan per daerah irigasi** dari kelengkapan bangunan:
+- **Teknis**: ada bendung, bangunan ukur cukup (minimal 3, atau minimal 20% dari jumlah bangunan bagi, sadap, dan box), dan ada saluran pembuang.
+- **Semi teknis**: ada bendung dan minimal satu bangunan ukur.
+- **Sederhana**: selain itu.
+
+Ini perkiraan, bukan penetapan resmi. Klasifikasi resmi bisa ditetapkan manual di jendela detail jalur atau petak (tersimpan di perangkat dan ikut cadangan JSON, kunci `JT`).
+
+## 12. Bangunan di sepanjang jalur
+Dari koordinat: bangunan dan bendung dalam jarak 25 m dari garis saluran (atau di dalam atau sampai 25 m dari batas petak) dianggap berada di jalur atau petak itu. Pada data survei, bangunan hulu dan hilir diambil dari keterkaitan hulu-hilir.
